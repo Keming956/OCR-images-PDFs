@@ -1,224 +1,203 @@
-// Initialisation des éléments du DOM
+// Éléments du DOM
+const tabs = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
 const fileInput = document.getElementById('fileInput');
-const selectFileBtn = document.getElementById('selectFileBtn');
 const dropArea = document.getElementById('dropArea');
-const processBtn = document.getElementById('processBtn');
-const statusEl = document.getElementById('status');
-const errorEl = document.getElementById('error');
-const resultSection = document.getElementById('resultSection');
+const selectFileBtn = document.getElementById('selectFileBtn');
+const takePhotoBtn = document.getElementById('takePhotoBtn');
+const photoCanvas = document.getElementById('photoCanvas');
+const webcam = document.getElementById('webcam');
+const captureWebcamBtn = document.getElementById('captureWebcamBtn');
+const webcamCanvas = document.getElementById('webcamCanvas');
 const textResult = document.getElementById('textResult');
+const processTextBtn = document.getElementById('processTextBtn');
 const readBtn = document.getElementById('readBtn');
-const stopBtn = document.getElementById('stopBtn');
 const copyBtn = document.getElementById('copyBtn');
-const voiceSelect = document.getElementById('voiceSelect');
-const progressContainer = document.getElementById('progressContainer');
-const progressBar = document.getElementById('progressBar');
 
 // Variables globales
-let selectedFile = null;
-let speechSynthesis = window.speechSynthesis;
-let speechUtterance = null;
+let stream = null;
 
-// Initialisation de PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+// Gestion des onglets
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+        
+        // Arrêter la webcam si on quitte l'onglet webcam
+        if (tab.dataset.tab !== 'webcam' && stream) {
+            stopWebcam();
+        }
+        
+        // Démarrer la webcam si on arrive sur l'onglet webcam
+        if (tab.dataset.tab === 'webcam' && !stream) {
+            startWebcam();
+        }
+    });
+});
 
-// Événements
+// Gestion des fichiers
 selectFileBtn.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length) {
-        handleFileSelection(e.target.files[0]);
+        processImage(e.target.files[0]);
     }
 });
 
 // Glisser-déposer
 dropArea.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dropArea.classList.add('active');
+    dropArea.style.background = 'rgba(74, 111, 165, 0.1)';
 });
 
-['dragleave', 'dragend'].forEach(type => {
-    dropArea.addEventListener(type, () => {
-        dropArea.classList.remove('active');
-    });
+dropArea.addEventListener('dragleave', () => {
+    dropArea.style.background = '';
 });
 
 dropArea.addEventListener('drop', (e) => {
     e.preventDefault();
-    dropArea.classList.remove('active');
+    dropArea.style.background = '';
     
     if (e.dataTransfer.files.length) {
-        handleFileSelection(e.dataTransfer.files[0]);
+        processImage(e.dataTransfer.files[0]);
     }
 });
 
-processBtn.addEventListener('click', processFile);
-readBtn.addEventListener('click', readText);
-stopBtn.addEventListener('click', stopReading);
-copyBtn.addEventListener('click', copyText);
-
-// Charger les voix disponibles
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices(); // Au cas où elles sont déjà chargées
-
-// Fonctions
-function handleFileSelection(file) {
-    // Vérifier le type de fichier
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'application/pdf'];
-    
-    if (!validTypes.includes(file.type)) {
-        showError('Type de fichier non supporté. Veuillez choisir une image ou un PDF.');
-        return;
-    }
-    
-    selectedFile = file;
-    processBtn.disabled = false;
-    statusEl.textContent = `Fichier sélectionné: ${file.name}`;
-    errorEl.textContent = '';
-}
-
-async function processFile() {
-    if (!selectedFile) return;
-    
-    try {
-        processBtn.disabled = true;
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        statusEl.textContent = 'Traitement en cours...';
-        errorEl.textContent = '';
-        
-        let text = '';
-        
-        if (selectedFile.type === 'application/pdf') {
-            text = await extractTextFromPDF(selectedFile);
-        } else {
-            text = await extractTextFromImage(selectedFile);
-        }
-        
-        textResult.value = text;
-        resultSection.style.display = 'block';
-        statusEl.textContent = 'Extraction terminée !';
-        progressBar.style.width = '100%';
-        
-        // Faire défiler jusqu'au résultat
-        resultSection.scrollIntoView({ behavior: 'smooth' });
-    } catch (err) {
-        showError(`Erreur lors du traitement: ${err.message}`);
-        processBtn.disabled = false;
-        progressContainer.style.display = 'none';
-    }
-}
-
-async function extractTextFromImage(file) {
-    return new Promise((resolve, reject) => {
-        Tesseract.recognize(
-            file,
-            'fra', // Langue française
-            {
-                logger: progress => {
-                    if (progress.status === 'recognizing text') {
-                        const percent = Math.round(progress.progress * 100);
-                        progressBar.style.width = `${percent}%`;
-                        statusEl.textContent = `Reconnaissance du texte... ${percent}%`;
-                    }
-                }
-            }
-        ).then(({ data: { text } }) => {
-            resolve(text);
-        }).catch(err => {
-            reject(err);
-        });
-    });
-}
-
-async function extractTextFromPDF(file) {
-    try {
-        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
-        let text = '';
-        
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const strings = content.items.map(item => item.str);
-            text += strings.join(' ') + '\n\n';
-            
-            // Mettre à jour la progression
-            const percent = Math.round((i / pdf.numPages) * 100);
-            progressBar.style.width = `${percent}%`;
-            statusEl.textContent = `Extraction du PDF... ${percent}%`;
-        }
-        
-        return text;
-    } catch (err) {
-        throw new Error('Erreur lors de la lecture du PDF');
-    }
-}
-
-function loadVoices() {
-    const voices = speechSynthesis.getVoices();
-    voiceSelect.innerHTML = '';
-    
-    // Filtrer les voix en français
-    const frenchVoices = voices.filter(voice => 
-        voice.lang.includes('fr') || voice.lang.includes('FR') || voice.lang.includes('fra')
-    );
-    
-    if (frenchVoices.length > 0) {
-        frenchVoices.forEach(voice => {
-            const option = document.createElement('option');
-            option.value = voice.name;
-            option.textContent = `${voice.name} (${voice.lang})`;
-            voiceSelect.appendChild(option);
+// Caméra photo
+takePhotoBtn.addEventListener('click', () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' }, 
+            audio: false 
+        }).then(mediaStream => {
+            const video = document.createElement('video');
+            video.srcObject = mediaStream;
+            video.onloadedmetadata = () => {
+                video.play();
+                
+                // Créer un canvas pour capturer la photo
+                photoCanvas.width = video.videoWidth;
+                photoCanvas.height = video.videoHeight;
+                const ctx = photoCanvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, photoCanvas.width, photoCanvas.height);
+                
+                // Arrêter le flux et traiter l'image
+                mediaStream.getTracks().forEach(track => track.stop());
+                photoCanvas.toBlob(blob => {
+                    processImage(blob);
+                }, 'image/jpeg');
+            };
+        }).catch(error => {
+            console.error("Erreur de la caméra:", error);
+            alert("Impossible d'accéder à la caméra");
         });
     } else {
-        // Si aucune voix française, utiliser toutes les voix disponibles
-        voices.forEach(voice => {
-            const option = document.createElement('option');
-            option.value = voice.name;
-            option.textContent = `${voice.name} (${voice.lang})`;
-            voiceSelect.appendChild(option);
+        alert("Votre navigateur ne supporte pas l'accès à la caméra");
+    }
+});
+
+// Webcam
+function startWebcam() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: false 
+        }).then(mediaStream => {
+            stream = mediaStream;
+            webcam.srcObject = mediaStream;
+        }).catch(error => {
+            console.error("Erreur de la webcam:", error);
+            alert("Impossible d'accéder à la webcam");
         });
+    } else {
+        alert("Votre navigateur ne supporte pas l'accès à la webcam");
     }
 }
 
-function readText() {
-    if (!textResult.value) return;
-    
-    if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-    }
-    
-    const selectedVoiceName = voiceSelect.value;
-    const voices = speechSynthesis.getVoices();
-    const selectedVoice = voices.find(voice => voice.name === selectedVoiceName) || null;
-    
-    speechUtterance = new SpeechSynthesisUtterance(textResult.value);
-    speechUtterance.voice = selectedVoice;
-    speechUtterance.rate = 1;
-    speechUtterance.pitch = 1;
-    speechUtterance.lang = selectedVoice ? selectedVoice.lang : 'fr-FR';
-    
-    speechSynthesis.speak(speechUtterance);
-    
-    readBtn.disabled = true;
-    stopBtn.disabled = false;
-    
-    speechUtterance.onend = () => {
-        readBtn.disabled = false;
-        stopBtn.disabled = true;
-    };
-}
-
-function stopReading() {
-    if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-        readBtn.disabled = false;
-        stopBtn.disabled = true;
+function stopWebcam() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        webcam.srcObject = null;
     }
 }
 
-function copyText() {
-    if (!textResult.value) return;
+captureWebcamBtn.addEventListener('click', () => {
+    if (!stream) return;
+    
+    webcamCanvas.width = webcam.videoWidth;
+    webcamCanvas.height = webcam.videoHeight;
+    const ctx = webcamCanvas.getContext('2d');
+    ctx.drawImage(webcam, 0, 0, webcamCanvas.width, webcamCanvas.height);
+    
+    webcamCanvas.toBlob(blob => {
+        processImage(blob);
+    }, 'image/jpeg');
+});
+
+// Traitement OCR
+async function processImage(file) {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('http://localhost:8000/ocr/image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        
+        const data = await response.json();
+        textResult.value = data.text;
+    } catch (error) {
+        console.error("Erreur OCR:", error);
+        alert("Erreur lors du traitement OCR");
+    }
+}
+
+// Traitement avec Mistral
+processTextBtn.addEventListener('click', async () => {
+    if (!textResult.value.trim()) return;
+    
+    try {
+        const response = await fetch('http://localhost:8000/process/text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: textResult.value })
+        });
+        
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        
+        const data = await response.json();
+        textResult.value = data.processed_text;
+    } catch (error) {
+        console.error("Erreur Mistral:", error);
+        alert("Erreur lors du traitement avec Mistral");
+    }
+});
+
+// Synthèse vocale
+readBtn.addEventListener('click', () => {
+    if (!textResult.value.trim()) return;
+    
+    const utterance = new SpeechSynthesisUtterance(textResult.value);
+    utterance.lang = 'fr-FR';
+    speechSynthesis.speak(utterance);
+});
+
+// Copier le texte
+copyBtn.addEventListener('click', () => {
+    if (!textResult.value.trim()) return;
     
     textResult.select();
     document.execCommand('copy');
@@ -226,12 +205,15 @@ function copyText() {
     // Feedback visuel
     const originalText = copyBtn.textContent;
     copyBtn.textContent = 'Copié !';
-    
     setTimeout(() => {
         copyBtn.textContent = originalText;
     }, 2000);
-}
+});
 
-function showError(message) {
-    errorEl.textContent = message;
-}
+// Démarrer la webcam si l'onglet est actif au chargement
+document.addEventListener('DOMContentLoaded', () => {
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab && activeTab.dataset.tab === 'webcam') {
+        startWebcam();
+    }
+});

@@ -3,48 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outil OCR avec Synthèse Vocale</title>
+    <title>OCR avec Mistral</title>
+    <script src="script.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <script src="script.js"></script>
     <div class="container">
-        <h1>Outil OCR avec Synthèse Vocale</h1>
+        <h1>OCR Intelligent avec Mistral</h1>
         
-        <div class="card upload-section">
-            <div id="dropArea" class="drop-area">
-                <p>Glissez-déposez votre fichier (image ou PDF) ici</p>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="image">Image</button>
+            <button class="tab-btn" data-tab="camera">Caméra Photo</button>
+            <button class="tab-btn" data-tab="webcam">Webcam</button>
+        </div>
+        
+        <div class="tab-content active" id="image-tab">
+            <div class="drop-area" id="dropArea">
+                <p>Glissez-déposez une image ici</p>
                 <p>ou</p>
-                <button id="selectFileBtn" class="btn">Sélectionner un fichier</button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,.pdf">
-            </div>
-            
-            <div class="controls">
-                <button id="processBtn" class="btn" disabled>Extraire le texte</button>
-            </div>
-            
-            <div id="status" class="status"></div>
-            <div id="error" class="error"></div>
-            
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar" id="progressBar"></div>
+                <button id="selectFileBtn" class="btn">Sélectionner une image</button>
+                <input type="file" id="fileInput" accept="image/*">
             </div>
         </div>
         
-        <div class="card result-section" id="resultSection">
-            <h2>Résultat de l'extraction</h2>
-            <textarea id="textResult" class="text-result" placeholder="Le texte extrait apparaîtra ici..." readonly></textarea>
-            
-            <div class="voice-controls">
-                <select id="voiceSelect" class="voice-select"></select>
-                <button id="readBtn" class="btn btn-secondary">Lire le texte</button>
-                <button id="stopBtn" class="btn">Arrêter</button>
+        <div class="tab-content" id="camera-tab">
+            <button id="takePhotoBtn" class="btn">Prendre une photo</button>
+            <canvas id="photoCanvas" style="display:none;"></canvas>
+        </div>
+        
+        <div class="tab-content" id="webcam-tab">
+            <video id="webcam" autoplay playsinline></video>
+            <button id="captureWebcamBtn" class="btn">Capturer</button>
+            <canvas id="webcamCanvas" style="display:none;"></canvas>
+        </div>
+        
+        <div class="result-section">
+            <h2>Résultat</h2>
+            <textarea id="textResult" readonly></textarea>
+            <div class="actions">
+                <button id="processTextBtn" class="btn">Traiter avec Mistral</button>
+                <button id="readBtn" class="btn">Lire</button>
                 <button id="copyBtn" class="btn">Copier</button>
             </div>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
