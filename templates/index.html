@@ -3,50 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR avec Mistral</title>
-    <script src="script.js"></script>
+    <title>OCR Vision - Extraction de texte avec Mistral AI</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <script src="script.js"></script>
     <div class="container">
-        <h1>OCR Intelligent avec Mistral</h1>
-        
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="image">Image</button>
-            <button class="tab-btn" data-tab="camera">Caméra Photo</button>
-            <button class="tab-btn" data-tab="webcam">Webcam</button>
-        </div>
-        
-        <div class="tab-content active" id="image-tab">
-            <div class="drop-area" id="dropArea">
-                <p>Glissez-déposez une image ici</p>
-                <p>ou</p>
-                <button id="selectFileBtn" class="btn">Sélectionner une image</button>
-                <input type="file" id="fileInput" accept="image/*">
+        <header>
+            <h1><i class="fas fa-eye"></i> OCR Vision</h1>
+            <p class="subtitle">Extraction de texte intelligent avec Mistral AI</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="drop-zone" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Glissez-déposez votre fichier ici</p>
+                    <p>ou</p>
+                    <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
+                    <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <p>Aucun fichier sélectionné</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="tab-content" id="camera-tab">
-            <button id="takePhotoBtn" class="btn">Prendre une photo</button>
-            <canvas id="photoCanvas" style="display:none;"></canvas>
-        </div>
-        
-        <div class="tab-content" id="webcam-tab">
-            <video id="webcam" autoplay playsinline></video>
-            <button id="captureWebcamBtn" class="btn">Capturer</button>
-            <canvas id="webcamCanvas" style="display:none;"></canvas>
-        </div>
-        
-        <div class="result-section">
-            <h2>Résultat</h2>
-            <textarea id="textResult" readonly></textarea>
-            <div class="actions">
-                <button id="processTextBtn" class="btn">Traiter avec Mistral</button>
-                <button id="readBtn" class="btn">Lire</button>
-                <button id="copyBtn" class="btn">Copier</button>
+
+            <div class="options-section">
+                <div class="option">
+                    <label for="language">Langue du texte :</label>
+                    <select id="language">
+                        <option value="fr">Français</option>
+                        <option value="en">Anglais</option>
+                        <option value="es">Espagnol</option>
+                        <option value="de">Allemand</option>
+                        <option value="it">Italien</option>
+                    </select>
+                </div>
+                <button class="btn process-btn" id="processBtn">
+                    <i class="fas fa-cogs"></i> Extraire le texte
+                </button>
             </div>
-        </div>
+
+            <div class="result-section">
+                <div class="result-header">
+                    <h2>Résultat de l'extraction</h2>
+                    <div class="action-buttons">
+                        <button class="btn icon-btn" id="copyBtn" title="Copier le texte">
+                            <i class="far fa-copy"></i>
+                        </button>
+                        <button class="btn icon-btn" id="readBtn" title="Lire le texte">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button class="btn icon-btn" id="downloadBtn" title="Télécharger le texte">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="result-content" id="resultContent">
+                    <p class="placeholder">Le texte extrait apparaîtra ici...</p>
+                </div>
+                <div class="processing" id="processingIndicator">
+                    <div class="spinner"></div>
+                    <p>Analyse en cours avec Mistral AI...</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Powered by Mistral AI • <span id="currentYear"></span></p>
+        </footer>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>

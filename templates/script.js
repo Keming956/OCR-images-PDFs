@@ -1,219 +1,136 @@
-// Éléments du DOM
-const tabs = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-const fileInput = document.getElementById('fileInput');
-const dropArea = document.getElementById('dropArea');
-const selectFileBtn = document.getElementById('selectFileBtn');
-const takePhotoBtn = document.getElementById('takePhotoBtn');
-const photoCanvas = document.getElementById('photoCanvas');
-const webcam = document.getElementById('webcam');
-const captureWebcamBtn = document.getElementById('captureWebcamBtn');
-const webcamCanvas = document.getElementById('webcamCanvas');
-const textResult = document.getElementById('textResult');
-const processTextBtn = document.getElementById('processTextBtn');
-const readBtn = document.getElementById('readBtn');
-const copyBtn = document.getElementById('copyBtn');
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current year in footer
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-// Variables globales
-let stream = null;
+    // DOM elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const processBtn = document.getElementById('processBtn');
+    const resultContent = document.getElementById('resultContent');
+    const copyBtn = document.getElementById('copyBtn');
+    const readBtn = document.getElementById('readBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const processingIndicator = document.getElementById('processingIndicator');
+    
+    let selectedFile = null;
 
-// Gestion des onglets
-tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
+    // Event listeners
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('active');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('active');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('active');
         
-        tab.classList.add('active');
-        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
-        
-        // Arrêter la webcam si on quitte l'onglet webcam
-        if (tab.dataset.tab !== 'webcam' && stream) {
-            stopWebcam();
-        }
-        
-        // Démarrer la webcam si on arrive sur l'onglet webcam
-        if (tab.dataset.tab === 'webcam' && !stream) {
-            startWebcam();
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect({ target: fileInput });
         }
     });
-});
-
-// Gestion des fichiers
-selectFileBtn.addEventListener('click', () => fileInput.click());
-
-fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) {
-        processImage(e.target.files[0]);
-    }
-});
-
-// Glisser-déposer
-dropArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropArea.style.background = 'rgba(74, 111, 165, 0.1)';
-});
-
-dropArea.addEventListener('dragleave', () => {
-    dropArea.style.background = '';
-});
-
-dropArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropArea.style.background = '';
     
-    if (e.dataTransfer.files.length) {
-        processImage(e.dataTransfer.files[0]);
-    }
-});
+    processBtn.addEventListener('click', processFile);
+    copyBtn.addEventListener('click', copyText);
+    readBtn.addEventListener('click', readText);
+    downloadBtn.addEventListener('click', downloadText);
 
-// Caméra photo
-takePhotoBtn.addEventListener('click', () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' }, 
-            audio: false 
-        }).then(mediaStream => {
-            const video = document.createElement('video');
-            video.srcObject = mediaStream;
-            video.onloadedmetadata = () => {
-                video.play();
-                
-                // Créer un canvas pour capturer la photo
-                photoCanvas.width = video.videoWidth;
-                photoCanvas.height = video.videoHeight;
-                const ctx = photoCanvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, photoCanvas.width, photoCanvas.height);
-                
-                // Arrêter le flux et traiter l'image
-                mediaStream.getTracks().forEach(track => track.stop());
-                photoCanvas.toBlob(blob => {
-                    processImage(blob);
-                }, 'image/jpeg');
-            };
-        }).catch(error => {
-            console.error("Erreur de la caméra:", error);
-            alert("Impossible d'accéder à la caméra");
-        });
-    } else {
-        alert("Votre navigateur ne supporte pas l'accès à la caméra");
-    }
-});
-
-// Webcam
-function startWebcam() {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ 
-            video: true, 
-            audio: false 
-        }).then(mediaStream => {
-            stream = mediaStream;
-            webcam.srcObject = mediaStream;
-        }).catch(error => {
-            console.error("Erreur de la webcam:", error);
-            alert("Impossible d'accéder à la webcam");
-        });
-    } else {
-        alert("Votre navigateur ne supporte pas l'accès à la webcam");
-    }
-}
-
-function stopWebcam() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-        webcam.srcObject = null;
-    }
-}
-
-captureWebcamBtn.addEventListener('click', () => {
-    if (!stream) return;
-    
-    webcamCanvas.width = webcam.videoWidth;
-    webcamCanvas.height = webcam.videoHeight;
-    const ctx = webcamCanvas.getContext('2d');
-    ctx.drawImage(webcam, 0, 0, webcamCanvas.width, webcamCanvas.height);
-    
-    webcamCanvas.toBlob(blob => {
-        processImage(blob);
-    }, 'image/jpeg');
-});
-
-// Traitement OCR
-async function processImage(file) {
-    try {
-        const formData = new FormData();
-        formData.append('file', file);
+    // Functions
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
         
-        const response = await fetch('http://localhost:8000/ocr/image', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error(await response.text());
+        selectedFile = file;
+        fileInfo.innerHTML = `<p><strong>Fichier sélectionné :</strong> ${file.name} (${formatFileSize(file.size)})</p>`;
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    async function processFile() {
+        if (!selectedFile) {
+            alert('Veuillez sélectionner un fichier d'abord');
+            return;
         }
         
-        const data = await response.json();
-        textResult.value = data.text;
-    } catch (error) {
-        console.error("Erreur OCR:", error);
-        alert("Erreur lors du traitement OCR");
-    }
-}
-
-// Traitement avec Mistral
-processTextBtn.addEventListener('click', async () => {
-    if (!textResult.value.trim()) return;
-    
-    try {
-        const response = await fetch('http://localhost:8000/process/text', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: textResult.value })
-        });
+        // Show processing indicator
+        resultContent.style.display = 'none';
+        processingIndicator.style.display = 'flex';
         
-        if (!response.ok) {
-            throw new Error(await response.text());
+        try {
+            // Simulate API call to Mistral AI (replace with actual API call)
+            // In a real implementation, you would send the file to your backend
+            // which would then call the Mistral AI API
+            const extractedText = await simulateMistralAIProcessing(selectedFile);
+            
+            // Display the result
+            resultContent.innerHTML = extractedText;
+            resultContent.style.display = 'block';
+            processingIndicator.style.display = 'none';
+        } catch (error) {
+            console.error('Error processing file:', error);
+            resultContent.innerHTML = `<p class="error">Une erreur s'est produite lors du traitement du fichier.</p>`;
+            resultContent.style.display = 'block';
+            processingIndicator.style.display = 'none';
+        }
+    }
+    
+    // Simulation function - replace with actual API call
+    function simulateMistralAIProcessing(file) {
+        return new Promise((resolve) => {
+            // Simulate API delay
+            setTimeout(() => {
+                // This is a mock response - in reality you would get this from Mistral AI
+                const mockText = `Texte extrait de ${file.name}:\n\n` +
+                    `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, ` +
+                    `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, ` +
+                    `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.\n\n` +
+                    `Mistral AI a détecté que ce texte est en français avec une confiance de 98%. ` +
+                    `Le document contient 3 paragraphes et 78 mots au total.`;
+                resolve(mockText);
+            }, 3000);
+        });
+    }
+    
+    function copyText() {
+        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
+            alert('Aucun texte à copier');
+            return;
         }
         
-        const data = await response.json();
-        textResult.value = data.processed_text;
-    } catch (error) {
-        console.error("Erreur Mistral:", error);
-        alert("Erreur lors du traitement avec Mistral");
+        navigator.clipboard.writeText(resultContent.textContent)
+            .then(() => {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Erreur lors de la copie:', err);
+            });
     }
-});
-
-// Synthèse vocale
-readBtn.addEventListener('click', () => {
-    if (!textResult.value.trim()) return;
     
-    const utterance = new SpeechSynthesisUtterance(textResult.value);
-    utterance.lang = 'fr-FR';
-    speechSynthesis.speak(utterance);
-});
-
-// Copier le texte
-copyBtn.addEventListener('click', () => {
-    if (!textResult.value.trim()) return;
-    
-    textResult.select();
-    document.execCommand('copy');
-    
-    // Feedback visuel
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = 'Copié !';
-    setTimeout(() => {
-        copyBtn.textContent = originalText;
-    }, 2000);
-});
-
-// Démarrer la webcam si l'onglet est actif au chargement
-document.addEventListener('DOMContentLoaded', () => {
-    const activeTab = document.querySelector('.tab-btn.active');
-    if (activeTab && activeTab.dataset.tab === 'webcam') {
-        startWebcam();
-    }
-});
+    function readText() {
+        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
+            alert('Aucun texte à lire');
+            return;
+        }
+        
+        const language = document.getElementById('language').value;
+        const utterance = new SpeechSynthesis
