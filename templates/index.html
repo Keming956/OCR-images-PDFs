@@ -3,31 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mistral Vision - Extraction de texte avec Mistral AI</title>
-    <link rel="stylesheet" href="style.css">
+    <title>OCR Vision - Extraction de texte avec Mistral AI</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-eye"></i> Mistral Vision</h1>
+            <h1><i class="fas fa-eye"></i> OCR Vision</h1>
             <p class="subtitle">Extraction de texte intelligent avec Mistral AI</p>
         </header>
 
         <main>
-            <div class="upload-section">
-                <div class="drop-zone" id="dropZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Glissez-déposez votre fichier ici</p>
-                    <p>ou</p>
-                    <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
-                    <button class="btn" id="cameraBtn">
-                        <i class="fas fa-camera"></i> Prendre une photo
-                    </button>
-                    <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
+            <div class="input-options">
+                <!-- Option Fichier -->
+                <div class="input-option">
+                    <h3><i class="fas fa-file-upload"></i> Importer un fichier</h3>
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Glissez-déposez votre fichier ici</p>
+                        <p>ou</p>
+                        <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
+                        <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
+                    </div>
+                    <div class="file-info" id="fileInfo">
+                        <p>Aucun fichier sélectionné</p>
+                    </div>
                 </div>
-                <div class="file-info" id="fileInfo">
-                    <p>Aucun fichier sélectionné</p>
+
+                <!-- Option Caméra -->
+                <div class="input-option">
+                    <h3><i class="fas fa-camera"></i> Prendre une photo</h3>
+                    <div class="camera-preview" id="cameraPreview">
+                        <i class="fas fa-camera"></i>
+                        <p>Capturez du texte avec votre caméra</p>
+                        <button class="btn" id="openCameraBtn">Ouvrir la caméra</button>
+                    </div>
+                    <div class="file-info" id="cameraFileInfo">
+                        <p>Aucune photo capturée</p>
+                    </div>
                 </div>
             </div>
 
@@ -72,24 +86,26 @@
             </div>
         </main>
 
+        <!-- Camera Modal -->
+        <div id="cameraModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="cameraClose">&times;</span>
+                <h3>Prendre une photo</h3>
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="cameraCanvas" style="display:none;"></canvas>
+                <div class="camera-controls">
+                    <button id="captureBtn" class="btn"><i class="fas fa-camera"></i> Capturer</button>
+                    <button id="retakeBtn" class="btn" style="display:none;"><i class="fas fa-redo"></i> Reprendre</button>
+                    <button id="usePhotoBtn" class="btn" style="display:none;"><i class="fas fa-check"></i> Utiliser cette photo</button>
+                </div>
+            </div>
+        </div>
+
         <footer>
             <p>Powered by Mistral AI • <span id="currentYear"></span></p>
         </footer>
     </div>
 
-    <div id="cameraModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="cameraClose">&times;</span>
-            <h3>Prendre une photo</h3>
-            <video id="cameraVideo" autoplay playsinline></video>
-            <canvas id="cameraCanvas" style="display:none;"></canvas>
-            <div class="camera-controls">
-                <button id="captureBtn" class="btn"><i class="fas fa-camera"></i> Capturer</button>
-                <button id="retakeBtn" class="btn" style="display:none;"><i class="fas fa-redo"></i> Reprendre</button>
-                <button id="usePhotoBtn" class="btn" style="display:none;"><i class="fas fa-check"></i> Utiliser cette photo</button>
-            </div>
-        </div>
-    </div>
     <script src="script.js"></script>
 </body>
 </html>

@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const readBtn = document.getElementById('readBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const processingIndicator = document.getElementById('processingIndicator');
-    const cameraBtn = document.getElementById('cameraBtn');
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const cameraPreview = document.getElementById('cameraPreview');
+    const cameraFileInfo = document.getElementById('cameraFileInfo');
     const cameraModal = document.getElementById('cameraModal');
     const cameraClose = document.getElementById('cameraClose');
     const cameraVideo = document.getElementById('cameraVideo');
@@ -50,17 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    processBtn.addEventListener('click', processFile);
-    copyBtn.addEventListener('click', copyText);
-    readBtn.addEventListener('click', readText);
-    downloadBtn.addEventListener('click', downloadText);
-    
     // Camera functionality
-    cameraBtn.addEventListener('click', openCamera);
+    openCameraBtn.addEventListener('click', openCamera);
     cameraClose.addEventListener('click', closeCamera);
     captureBtn.addEventListener('click', captureImage);
     retakeBtn.addEventListener('click', retakePhoto);
     usePhotoBtn.addEventListener('click', usePhoto);
+
+    processBtn.addEventListener('click', processFile);
+    copyBtn.addEventListener('click', copyText);
+    readBtn.addEventListener('click', readText);
+    downloadBtn.addEventListener('click', downloadText);
 
     // Functions
     function handleFileSelect(event) {
@@ -69,6 +71,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         selectedFile = file;
         fileInfo.innerHTML = `<p><strong>Fichier sélectionné :</strong> ${file.name} (${formatFileSize(file.size)})</p>`;
+        
+        // Clear camera selection if any
+        capturedImage = null;
+        cameraFileInfo.innerHTML = '<p>Aucune photo capturée</p>';
     }
     
     function formatFileSize(bytes) {
@@ -80,10 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function processFile() {
-        if (!selectedFile) {
-            alert('Veuillez sélectionner un fichier d'abord');
+        if (!selectedFile && !capturedImage) {
+            alert('Veuillez sélectionner un fichier ou prendre une photo d'abord');
             return;
         }
+        
+        const fileToProcess = capturedImage || selectedFile;
         
         // Show processing indicator
         resultContent.style.display = 'none';
@@ -91,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Simulate API call to Mistral AI (replace with actual API call)
-            const extractedText = await simulateMistralAIProcessing(selectedFile);
+            const extractedText = await simulateMistralAIProcessing(fileToProcess);
             
             // Display the result
             resultContent.innerHTML = extractedText;
@@ -99,17 +107,17 @@ document.addEventListener('DOMContentLoaded', function() {
             processingIndicator.style.display = 'none';
         } catch (error) {
             console.error('Error processing file:', error);
-            resultContent.innerHTML = `<p class="error">Une erreur s'est produite lors du traitement du fichier.</p>`;
+            resultContent.innerHTML = `<p class="error">Une erreur s'est produite lors du traitement.</p>`;
             resultContent.style.display = 'block';
             processingIndicator.style.display = 'none';
         }
     }
     
-    // Simulation function - replace with actual API call
     function simulateMistralAIProcessing(file) {
         return new Promise((resolve) => {
             setTimeout(() => {
-                const mockText = `Texte extrait de ${file.name}:\n\n` +
+                const source = file === capturedImage ? 'photo capturée' : file.name;
+                const mockText = `Texte extrait de ${source}:\n\n` +
                     `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, ` +
                     `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, ` +
                     `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.\n\n` +
@@ -170,81 +178,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Camera functions
     async function openCamera() {
-        cameraModal.style.display = 'block';
-        
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false 
-            });
-            cameraVideo.srcObject = stream;
-            cameraVideo.play();
-            
-            // Show capture button and hide other camera buttons
-            captureBtn.style.display = 'block';
-            retakeBtn.style.display = 'none';
-            usePhotoBtn.style.display = 'none';
-            cameraCanvas.style.display = 'none';
-        } catch (err) {
-            console.error("Erreur d'accès à la caméra:", err);
-            alert("Impossible d'accéder à la caméra. Veuillez vérifier les permissions.");
-            closeCamera();
-        }
-    }
-    
-    function closeCamera() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-        cameraModal.style.display = 'none';
-    }
-    
-    function captureImage() {
-        // Set canvas dimensions to match video stream
-        const videoWidth = cameraVideo.videoWidth;
-        const videoHeight = cameraVideo.videoHeight;
-        cameraCanvas.width = videoWidth;
-        cameraCanvas.height = videoHeight;
-        
-        // Draw current video frame to canvas
-        const ctx = cameraCanvas.getContext('2d');
-        ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
-        
-        // Stop the video stream
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-        
-        // Show the captured image and controls
-        cameraCanvas.style.display = 'block';
-        cameraVideo.style.display = 'none';
-        captureBtn.style.display = 'none';
-        retakeBtn.style.display = 'block';
-        usePhotoBtn.style.display = 'block';
-    }
-    
-    function retakePhoto() {
-        // Reset camera view
-        cameraCanvas.style.display = 'none';
-        cameraVideo.style.display = 'block';
-        openCamera();
-    }
-    
-    function usePhoto() {
-        // Convert canvas to blob and create a File object
-        cameraCanvas.toBlob((blob) => {
-            capturedImage = new File([blob], 'photo_capture.jpg', { type: 'image/jpeg' });
-            
-            // Set as selected file
-            selectedFile = capturedImage;
-            fileInfo.innerHTML = `<p><strong>Fichier sélectionné :</strong> photo_capture.jpg</p>`;
-            
-            // Close camera modal
-            closeCamera();
-        }, 'image/jpeg', 0.9);
-    }
-});
+        cameraModal.style.display = 'block

@@ -32,80 +32,6 @@ body {
     display: flex;
     flex-direction: column;
 }
-/* Camera Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    overflow: auto;
-}
-
-.modal-content {
-    background-color: white;
-    margin: 5% auto;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 800px;
-    position: relative;
-}
-
-.modal h3 {
-    color: var(--secondary-color);
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.close {
-    position: absolute;
-    right: 1.5rem;
-    top: 1rem;
-    color: #aaa;
-    font-size: 2rem;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover {
-    color: var(--dark-color);
-}
-
-#cameraVideo, #cameraCanvas {
-    width: 100%;
-    height: auto;
-    max-height: 60vh;
-    background-color: var(--dark-color);
-    border-radius: var(--border-radius);
-    margin-bottom: 1rem;
-}
-
-.camera-controls {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-/* Add camera button to upload section */
-.upload-section {
-    position: relative;
-}
-
-#cameraBtn {
-    position: absolute;
-    right: 0;
-    top: 0;
-    background-color: var(--accent-color);
-}
-
-#cameraBtn:hover {
-    background-color: #03a9f4;
-}
 
 header {
     text-align: center;
@@ -125,6 +51,74 @@ header h1 i {
 .subtitle {
     color: #6c757d;
     font-size: 1.1rem;
+}
+
+.input-options {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.input-option {
+    flex: 1;
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.input-option h3 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.drop-zone, .camera-preview {
+    border: 2px dashed var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 1rem;
+    background-color: rgba(74, 111, 165, 0.05);
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.drop-zone i, .camera-preview i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.drop-zone p, .camera-preview p {
+    margin: 0.3rem 0;
+    color: #495057;
+}
+
+.drop-zone:hover, .drop-zone.active,
+.camera-preview:hover {
+    background-color: rgba(74, 111, 165, 0.1);
+    border-color: var(--secondary-color);
+}
+
+.file-info {
+    background-color: #f8f9fa;
+    padding: 0.8rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+}
+
+.file-info p {
+    color: #495057;
+    font-style: italic;
+    margin: 0;
 }
 
 .btn {
@@ -167,50 +161,6 @@ header h1 i {
     height: 40px;
     border-radius: 50%;
     margin-left: 0.5rem;
-}
-
-.upload-section {
-    margin-bottom: 2rem;
-}
-
-.drop-zone {
-    border: 2px dashed var(--primary-color);
-    border-radius: var(--border-radius);
-    padding: 3rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: var(--transition);
-    margin-bottom: 1rem;
-    background-color: rgba(74, 111, 165, 0.05);
-}
-
-.drop-zone i {
-    font-size: 3rem;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-}
-
-.drop-zone p {
-    margin: 0.5rem 0;
-    color: #495057;
-}
-
-.drop-zone:hover, .drop-zone.active {
-    background-color: rgba(74, 111, 165, 0.1);
-    border-color: var(--secondary-color);
-}
-
-.file-info {
-    background-color: white;
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    margin-top: 1rem;
-}
-
-.file-info p {
-    color: #495057;
-    font-style: italic;
 }
 
 .options-section {
@@ -312,6 +262,65 @@ header h1 i {
     100% { transform: rotate(360deg); }
 }
 
+/* Camera Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    overflow: auto;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 800px;
+    position: relative;
+}
+
+.modal h3 {
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1rem;
+    color: #aaa;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: var(--dark-color);
+}
+
+#cameraVideo, #cameraCanvas {
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    background-color: var(--dark-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.camera-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
 footer {
     text-align: center;
     padding: 1rem;
@@ -323,6 +332,10 @@ footer {
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
+    }
+    
+    .input-options {
+        flex-direction: column;
     }
     
     .options-section {
