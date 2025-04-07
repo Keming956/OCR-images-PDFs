@@ -13,8 +13,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const readBtn = document.getElementById('readBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const processingIndicator = document.getElementById('processingIndicator');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraClose = document.getElementById('cameraClose');
+    const cameraVideo = document.getElementById('cameraVideo');
+    const captureBtn = document.getElementById('captureBtn');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const usePhotoBtn = document.getElementById('usePhotoBtn');
     
     let selectedFile = null;
+    let stream = null;
+    let capturedImage = null;
 
     // Event listeners
     selectFileBtn.addEventListener('click', () => fileInput.click());
@@ -44,6 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
     copyBtn.addEventListener('click', copyText);
     readBtn.addEventListener('click', readText);
     downloadBtn.addEventListener('click', downloadText);
+    
+    // Camera functionality
+    cameraBtn.addEventListener('click', openCamera);
+    cameraClose.addEventListener('click', closeCamera);
+    captureBtn.addEventListener('click', captureImage);
+    retakeBtn.addEventListener('click', retakePhoto);
+    usePhotoBtn.addEventListener('click', usePhoto);
 
     // Functions
     function handleFileSelect(event) {
@@ -74,8 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Simulate API call to Mistral AI (replace with actual API call)
-            // In a real implementation, you would send the file to your backend
-            // which would then call the Mistral AI API
             const extractedText = await simulateMistralAIProcessing(selectedFile);
             
             // Display the result
@@ -93,9 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Simulation function - replace with actual API call
     function simulateMistralAIProcessing(file) {
         return new Promise((resolve) => {
-            // Simulate API delay
             setTimeout(() => {
-                // This is a mock response - in reality you would get this from Mistral AI
                 const mockText = `Texte extrait de ${file.name}:\n\n` +
                     `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, ` +
                     `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, ` +
@@ -133,4 +146,105 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const language = document.getElementById('language').value;
-        const utterance = new SpeechSynthesis
+        const utterance = new SpeechSynthesisUtterance(resultContent.textContent);
+        utterance.lang = language;
+        window.speechSynthesis.speak(utterance);
+    }
+    
+    function downloadText() {
+        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
+            alert('Aucun texte à télécharger');
+            return;
+        }
+        
+        const blob = new Blob([resultContent.textContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'texte_extrait.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // Camera functions
+    async function openCamera() {
+        cameraModal.style.display = 'block';
+        
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false 
+            });
+            cameraVideo.srcObject = stream;
+            cameraVideo.play();
+            
+            // Show capture button and hide other camera buttons
+            captureBtn.style.display = 'block';
+            retakeBtn.style.display = 'none';
+            usePhotoBtn.style.display = 'none';
+            cameraCanvas.style.display = 'none';
+        } catch (err) {
+            console.error("Erreur d'accès à la caméra:", err);
+            alert("Impossible d'accéder à la caméra. Veuillez vérifier les permissions.");
+            closeCamera();
+        }
+    }
+    
+    function closeCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        cameraModal.style.display = 'none';
+    }
+    
+    function captureImage() {
+        // Set canvas dimensions to match video stream
+        const videoWidth = cameraVideo.videoWidth;
+        const videoHeight = cameraVideo.videoHeight;
+        cameraCanvas.width = videoWidth;
+        cameraCanvas.height = videoHeight;
+        
+        // Draw current video frame to canvas
+        const ctx = cameraCanvas.getContext('2d');
+        ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
+        
+        // Stop the video stream
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        
+        // Show the captured image and controls
+        cameraCanvas.style.display = 'block';
+        cameraVideo.style.display = 'none';
+        captureBtn.style.display = 'none';
+        retakeBtn.style.display = 'block';
+        usePhotoBtn.style.display = 'block';
+    }
+    
+    function retakePhoto() {
+        // Reset camera view
+        cameraCanvas.style.display = 'none';
+        cameraVideo.style.display = 'block';
+        openCamera();
+    }
+    
+    function usePhoto() {
+        // Convert canvas to blob and create a File object
+        cameraCanvas.toBlob((blob) => {
+            capturedImage = new File([blob], 'photo_capture.jpg', { type: 'image/jpeg' });
+            
+            // Set as selected file
+            selectedFile = capturedImage;
+            fileInfo.innerHTML = `<p><strong>Fichier sélectionné :</strong> photo_capture.jpg</p>`;
+            
+            // Close camera modal
+            closeCamera();
+        }, 'image/jpeg', 0.9);
+    }
+});
