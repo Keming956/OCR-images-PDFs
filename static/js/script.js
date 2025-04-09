@@ -1,181 +1,183 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Set current year in footer
+document.addEventListener('DOMContentLoaded', () => {
+    // Init date
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // DOM elements
+    // Éléments DOM
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const selectFileBtn = document.getElementById('selectFileBtn');
     const fileInfo = document.getElementById('fileInfo');
+    const cameraFileInfo = document.getElementById('cameraFileInfo');
     const processBtn = document.getElementById('processBtn');
     const resultContent = document.getElementById('resultContent');
+    const processing = document.getElementById('processingIndicator');
     const copyBtn = document.getElementById('copyBtn');
     const readBtn = document.getElementById('readBtn');
     const downloadBtn = document.getElementById('downloadBtn');
-    const processingIndicator = document.getElementById('processingIndicator');
+
     const openCameraBtn = document.getElementById('openCameraBtn');
-    const cameraPreview = document.getElementById('cameraPreview');
-    const cameraFileInfo = document.getElementById('cameraFileInfo');
     const cameraModal = document.getElementById('cameraModal');
     const cameraClose = document.getElementById('cameraClose');
     const cameraVideo = document.getElementById('cameraVideo');
-    const captureBtn = document.getElementById('captureBtn');
     const cameraCanvas = document.getElementById('cameraCanvas');
+    const captureBtn = document.getElementById('captureBtn');
     const retakeBtn = document.getElementById('retakeBtn');
     const usePhotoBtn = document.getElementById('usePhotoBtn');
-    
-    let selectedFile = null;
-    let stream = null;
-    let capturedImage = null;
 
-    // Event listeners
+    let selectedFile = null;
+    let capturedImageBlob = null;
+    let stream = null;
+
+    // Sélection fichier
     selectFileBtn.addEventListener('click', () => fileInput.click());
-    
     fileInput.addEventListener('change', handleFileSelect);
-    
-    dropZone.addEventListener('dragover', (e) => {
+
+    dropZone.addEventListener('dragover', e => {
         e.preventDefault();
         dropZone.classList.add('active');
     });
-    
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('active');
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+
+    dropZone.addEventListener('drop', e => {
         e.preventDefault();
         dropZone.classList.remove('active');
-        
-        if (e.dataTransfer.files.length) {
+        if (e.dataTransfer.files.length > 0) {
             fileInput.files = e.dataTransfer.files;
             handleFileSelect({ target: fileInput });
         }
     });
-    
-    // Camera functionality
-    openCameraBtn.addEventListener('click', openCamera);
-    cameraClose.addEventListener('click', closeCamera);
-    captureBtn.addEventListener('click', captureImage);
-    retakeBtn.addEventListener('click', retakePhoto);
-    usePhotoBtn.addEventListener('click', usePhoto);
 
-    processBtn.addEventListener('click', processFile);
-    copyBtn.addEventListener('click', copyText);
-    readBtn.addEventListener('click', readText);
-    downloadBtn.addEventListener('click', downloadText);
-
-    // Functions
     function handleFileSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
         selectedFile = file;
-        fileInfo.innerHTML = `<p><strong>Fichier sélectionné :</strong> ${file.name} (${formatFileSize(file.size)})</p>`;
-        
-        // Clear camera selection if any
-        capturedImage = null;
+        capturedImageBlob = null;
+        fileInfo.innerHTML = `<p><strong>Fichier :</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)</p>`;
         cameraFileInfo.innerHTML = '<p>Aucune photo capturée</p>';
     }
-    
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    
-    async function processFile() {
-        if (!selectedFile && !capturedImage) {
-            alert('Veuillez sélectionner un fichier ou prendre une photo d'abord');
+
+    // Traitement OCR
+    processBtn.addEventListener('click', async () => {
+        if (!selectedFile && !capturedImageBlob) {
+            alert('Veuillez importer une image ou capturer une photo.');
             return;
         }
-        
-        const fileToProcess = capturedImage || selectedFile;
-        
-        // Show processing indicator
-        resultContent.style.display = 'none';
-        processingIndicator.style.display = 'flex';
-        
+
+        const formData = new FormData();
+        const lang = document.getElementById('language').value;
+
+        if (capturedImageBlob) {
+            formData.append("file", capturedImageBlob, "camera.jpg");
+        } else {
+            formData.append("file", selectedFile);
+        }
+        formData.append("lang", lang);
+
+        resultContent.style.display = "none";
+        processing.style.display = "flex";
+
         try {
-            // Simulate API call to Mistral AI (replace with actual API call)
-            const extractedText = await simulateMistralAIProcessing(fileToProcess);
-            
-            // Display the result
-            resultContent.innerHTML = extractedText;
-            resultContent.style.display = 'block';
-            processingIndicator.style.display = 'none';
-        } catch (error) {
-            console.error('Error processing file:', error);
-            resultContent.innerHTML = `<p class="error">Une erreur s'est produite lors du traitement.</p>`;
-            resultContent.style.display = 'block';
-            processingIndicator.style.display = 'none';
-        }
-    }
-    
-    function simulateMistralAIProcessing(file) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const source = file === capturedImage ? 'photo capturée' : file.name;
-                const mockText = `Texte extrait de ${source}:\n\n` +
-                    `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, ` +
-                    `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, ` +
-                    `nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.\n\n` +
-                    `Mistral AI a détecté que ce texte est en français avec une confiance de 98%. ` +
-                    `Le document contient 3 paragraphes et 78 mots au total.`;
-                resolve(mockText);
-            }, 3000);
-        });
-    }
-    
-    function copyText() {
-        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
-            alert('Aucun texte à copier');
-            return;
-        }
-        
-        navigator.clipboard.writeText(resultContent.textContent)
-            .then(() => {
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                }, 2000);
-            })
-            .catch(err => {
-                console.error('Erreur lors de la copie:', err);
+            const response = await fetch("/ocr", {
+                method: "POST",
+                body: formData
             });
-    }
-    
-    function readText() {
-        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
-            alert('Aucun texte à lire');
-            return;
+
+            const result = await response.text();
+            resultContent.innerText = result;
+        } catch (error) {
+            console.error(error);
+            resultContent.innerText = "Erreur lors de l'extraction OCR.";
         }
-        
-        const language = document.getElementById('language').value;
-        const utterance = new SpeechSynthesisUtterance(resultContent.textContent);
-        utterance.lang = language;
-        window.speechSynthesis.speak(utterance);
-    }
-    
-    function downloadText() {
-        if (!resultContent.textContent || resultContent.textContent.includes('Le texte extrait apparaîtra ici')) {
-            alert('Aucun texte à télécharger');
-            return;
-        }
-        
-        const blob = new Blob([resultContent.textContent], { type: 'text/plain' });
+
+        processing.style.display = "none";
+        resultContent.style.display = "block";
+    });
+
+    // Copier
+    copyBtn.addEventListener('click', () => {
+        const text = resultContent.innerText;
+        if (!text.trim()) return;
+        navigator.clipboard.writeText(text);
+        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+        }, 2000);
+    });
+
+    // Lire à voix haute
+    readBtn.addEventListener('click', () => {
+        const text = resultContent.innerText;
+        if (!text.trim()) return;
+        const lang = document.getElementById('language').value;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        speechSynthesis.speak(utterance);
+    });
+
+    // Télécharger
+    downloadBtn.addEventListener('click', () => {
+        const text = resultContent.innerText;
+        if (!text.trim()) return;
+        const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = 'texte_extrait.txt';
+        a.download = "texte_ocr.txt";
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    });
+
+    // Camera
+    openCameraBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            cameraVideo.srcObject = stream;
+            cameraModal.style.display = "block";
+        } catch (err) {
+            alert("Accès à la caméra refusé ou non disponible.");
+        }
+    });
+
+    cameraClose.addEventListener('click', () => {
+        cameraModal.style.display = "none";
+        if (stream) stream.getTracks().forEach(track => track.stop());
+    });
+
+    captureBtn.addEventListener('click', () => {
+        cameraCanvas.style.display = "block";
+        cameraCanvas.width = cameraVideo.videoWidth;
+        cameraCanvas.height = cameraVideo.videoHeight;
+        cameraCanvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+        capturedImageBlob = dataURLToBlob(cameraCanvas.toDataURL("image/jpeg"));
+        retakeBtn.style.display = "inline-block";
+        usePhotoBtn.style.display = "inline-block";
+        captureBtn.style.display = "none";
+    });
+
+    retakeBtn.addEventListener('click', () => {
+        cameraCanvas.style.display = "none";
+        capturedImageBlob = null;
+        retakeBtn.style.display = "none";
+        usePhotoBtn.style.display = "none";
+        captureBtn.style.display = "inline-block";
+    });
+
+    usePhotoBtn.addEventListener('click', () => {
+        selectedFile = null;
+        fileInfo.innerHTML = '<p>Aucun fichier sélectionné</p>';
+        cameraFileInfo.innerHTML = "<p>Photo capturée prête à être traitée</p>";
+        cameraModal.style.display = "none";
+        if (stream) stream.getTracks().forEach(track => track.stop());
+    });
+
+    function dataURLToBlob(dataURL) {
+        const [header, base64] = dataURL.split(',');
+        const mime = header.match(/:(.*?);/)[1];
+        const binary = atob(base64);
+        const array = Uint8Array.from(binary, char => char.charCodeAt(0));
+        return new Blob([array], { type: mime });
     }
-    
-    // Camera functions
-    async function openCamera() {
-        cameraModal.style.display = 'block
+});

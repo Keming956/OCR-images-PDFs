@@ -22,10 +22,11 @@ body {
     background-color: #f5f7fa;
     color: var(--dark-color);
     line-height: 1.6;
+    scroll-behavior: smooth;
 }
 
 .container {
-    max-width: 900px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 2rem;
     min-height: 100vh;
@@ -44,10 +45,6 @@ header h1 {
     margin-bottom: 0.5rem;
 }
 
-header h1 i {
-    margin-right: 0.5rem;
-}
-
 .subtitle {
     color: #6c757d;
     font-size: 1.1rem;
@@ -57,6 +54,7 @@ header h1 i {
     display: flex;
     gap: 1.5rem;
     margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
 .input-option {
@@ -65,17 +63,11 @@ header h1 i {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
+    min-width: 280px;
 }
 
-.input-option h3 {
-    color: var(--secondary-color);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.drop-zone, .camera-preview {
+.drop-zone,
+.camera-preview {
     border: 2px dashed var(--primary-color);
     border-radius: var(--border-radius);
     padding: 2rem 1rem;
@@ -91,28 +83,11 @@ header h1 i {
     align-items: center;
 }
 
-.drop-zone i, .camera-preview i {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-}
-
-.drop-zone p, .camera-preview p {
-    margin: 0.3rem 0;
-    color: #495057;
-}
-
-.drop-zone:hover, .drop-zone.active,
+.drop-zone:hover,
+.drop-zone.active,
 .camera-preview:hover {
     background-color: rgba(74, 111, 165, 0.1);
     border-color: var(--secondary-color);
-}
-
-.file-info {
-    background-color: #f8f9fa;
-    padding: 0.8rem;
-    border-radius: var(--border-radius);
-    font-size: 0.9rem;
 }
 
 .file-info p {
@@ -172,11 +147,8 @@ header h1 i {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-}
-
-.option {
-    display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .option label {
@@ -207,15 +179,6 @@ header h1 i {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #e9ecef;
-}
-
-.result-header h2 {
-    color: var(--secondary-color);
-    font-size: 1.5rem;
-}
-
-.action-buttons {
-    display: flex;
 }
 
 .result-content {
@@ -262,7 +225,6 @@ header h1 i {
     100% { transform: rotate(360deg); }
 }
 
-/* Camera Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -299,6 +261,8 @@ header h1 i {
     font-size: 2rem;
     font-weight: bold;
     cursor: pointer;
+    background: none;
+    border: none;
 }
 
 .close:hover {
@@ -328,25 +292,17 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Responsive design */
+/* Responsive */
 @media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-    
     .input-options {
         flex-direction: column;
     }
-    
+
     .options-section {
         flex-direction: column;
         align-items: stretch;
     }
-    
-    .option {
-        margin-bottom: 1rem;
-    }
-    
+
     .process-btn {
         width: 100%;
     }
