@@ -5,109 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OCR Vision – Extraction de texte</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
-    <script src="{{ url_for('static', path='js/script.js') }}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-eye"></i> OCR Vision</h1>
-            <p class="subtitle">Extraction de texte avec FastAPI + Tesseract</p>
-        </header>
+<div class="container">
+    <header>
+        <h1><i class="fas fa-eye"></i> OCR Vision</h1>
+        <p class="subtitle">Extraction de texte avec FastAPI + Tesseract</p>
+    </header>
 
-        <main>
-            <section class="input-options" aria-label="Options d'import">
-                <!-- Fichier Upload -->
-                <div class="input-option" aria-labelledby="uploadLabel">
-                    <h3 id="uploadLabel"><i class="fas fa-file-upload"></i> Importer un fichier</h3>
-                    <div class="drop-zone" id="dropZone" role="button" tabindex="0">
-                        <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
-                        <p>Glissez-déposez ici ou</p>
-                        <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
-                        <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
-                    </div>
-                    <div class="file-info" id="fileInfo">
-                        <p>Aucun fichier sélectionné</p>
-                    </div>
+    <main>
+        <!-- Upload & Caméra -->
+        <section class="input-options" aria-label="Options d'import">
+            <div class="input-option" aria-labelledby="uploadLabel">
+                <h3 id="uploadLabel"><i class="fas fa-file-upload"></i> Importer un fichier</h3>
+                <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+                    <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                    <p>Glissez-déposez ici ou</p>
+                    <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
+                    <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
                 </div>
-
-                <!-- Caméra -->
-                <div class="input-option" aria-labelledby="cameraLabel">
-                    <h3 id="cameraLabel"><i class="fas fa-camera"></i> Prendre une photo</h3>
-                    <div class="camera-preview" id="cameraPreview">
-                        <i class="fas fa-camera" aria-hidden="true"></i>
-                        <p>Capturez du texte avec votre caméra</p>
-                        <button class="btn" id="openCameraBtn">Ouvrir la caméra</button>
-                    </div>
-                    <div class="file-info" id="cameraFileInfo">
-                        <p>Aucune photo capturée</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="options-section" aria-label="Options de traitement">
-                <div class="option">
-                    <label for="language">Langue du texte :</label>
-                    <select id="language" name="language">
-                        <option value="fra">Français</option>
-                        <option value="eng">Anglais</option>
-                        <option value="spa">Espagnol</option>
-                        <option value="deu">Allemand</option>
-                        <option value="ita">Italien</option>
-                    </select>
-                </div>
-                <button class="btn process-btn" id="processBtn">
-                    <i class="fas fa-cogs"></i> Extraire le texte
-                </button>
-            </section>
-
-            <section class="result-section" aria-live="polite">
-                <div class="result-header">
-                    <h2>Résultat</h2>
-                    <div class="action-buttons">
-                        <button class="btn icon-btn" id="copyBtn" title="Copier">
-                            <i class="far fa-copy"></i>
-                        </button>
-                        <button class="btn icon-btn" id="readBtn" title="Lire">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                        <button class="btn icon-btn" id="downloadBtn" title="Télécharger">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="result-content" id="resultContent">
-                    <p class="placeholder">Le texte extrait apparaîtra ici...</p>
-                </div>
-
-                <div class="processing" id="processingIndicator" aria-hidden="true">
-                    <div class="spinner"></div>
-                    <p>Analyse en cours...</p>
-                </div>
-            </section>
-        </main>
-
-        <!-- Modal Caméra -->
-        <div id="cameraModal" class="modal" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <button class="close" id="cameraClose" title="Fermer la caméra" aria-label="Fermer">&times;</button>
-                <h3>Prendre une photo</h3>
-                <video id="cameraVideo" autoplay playsinline></video>
-                <canvas id="cameraCanvas" style="display:none;"></canvas>
-                <div class="camera-controls">
-                    <button id="captureBtn" class="btn"><i class="fas fa-camera"></i> Capturer</button>
-                    <button id="retakeBtn" class="btn" style="display:none;"><i class="fas fa-redo"></i> Reprendre</button>
-                    <button id="usePhotoBtn" class="btn" style="display:none;"><i class="fas fa-check"></i> Utiliser</button>
+                <div class="file-info" id="fileInfo">
+                    <p>Aucun fichier sélectionné</p>
                 </div>
             </div>
-        </div>
 
-        <footer>
-            <p>Powered by Tesseract & FastAPI • <span id="currentYear"></span></p>
-        </footer>
+            <div class="input-option" aria-labelledby="cameraLabel">
+                <h3 id="cameraLabel"><i class="fas fa-camera"></i> Prendre une photo</h3>
+                <div class="camera-preview" id="cameraPreview">
+                    <i class="fas fa-camera" aria-hidden="true"></i>
+                    <p>Capturez du texte avec votre caméra</p>
+                    <button class="btn" id="openCameraBtn">Ouvrir la caméra</button>
+                </div>
+                <div class="file-info" id="cameraFileInfo">
+                    <p>Aucune photo capturée</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Options -->
+        <section class="options-section" aria-label="Options de traitement">
+            <div class="option">
+                <label for="language">Langue du texte :</label>
+                <select id="language" name="language">
+                    <option value="fra">Français</option>
+                    <option value="eng">Anglais</option>
+                    <option value="spa">Espagnol</option>
+                    <option value="deu">Allemand</option>
+                    <option value="ita">Italien</option>
+                </select>
+            </div>
+            <button class="btn process-btn" id="processBtn">
+                <i class="fas fa-cogs"></i> Extraire le texte
+            </button>
+        </section>
+
+        <!-- Résultat OCR -->
+        <section class="result-section" aria-live="polite">
+            <div class="result-header">
+                <h2>Résultat OCR</h2>
+                <div class="action-buttons">
+                    <button class="btn icon-btn" id="copyBtn" title="Copier">
+                        <i class="far fa-copy"></i>
+                    </button>
+                    <button class="btn icon-btn" id="readBtn" title="Lire">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <button class="btn icon-btn" id="downloadBtn" title="Télécharger">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-content" id="resultContent">
+                <p class="placeholder">Le texte extrait apparaîtra ici...</p>
+            </div>
+
+            <div class="processing" id="processingIndicator" aria-hidden="true">
+                <div class="spinner"></div>
+                <p>Analyse en cours...</p>
+            </div>
+        </section>
+
+        <!-- Saisie manuelle -->
+        <section class="manual-input-section" aria-label="Saisie manuelle">
+            <h2><i class="fas fa-keyboard"></i> Saisir manuellement</h2>
+            <textarea id="manualInput" placeholder="Écrivez ici un texte à faire lire, copier ou télécharger..."></textarea>
+            <div class="manual-actions">
+                <button class="btn icon-btn" id="manualCopyBtn" title="Copier">
+                    <i class="far fa-copy"></i>
+                </button>
+                <button class="btn icon-btn" id="manualReadBtn" title="Lire">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <button class="btn icon-btn" id="manualDownloadBtn" title="Télécharger">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Caméra -->
+    <div id="cameraModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <button class="close" id="cameraClose" title="Fermer la caméra" aria-label="Fermer">&times;</button>
+            <h3>Prendre une photo</h3>
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas" style="display:none;"></canvas>
+            <div class="camera-controls">
+                <button id="captureBtn" class="btn"><i class="fas fa-camera"></i> Capturer</button>
+                <button id="retakeBtn" class="btn" style="display:none;"><i class="fas fa-redo"></i> Reprendre</button>
+                <button id="usePhotoBtn" class="btn" style="display:none;"><i class="fas fa-check"></i> Utiliser</button>
+            </div>
+        </div>
     </div>
 
-    <script src="{{ url_for('static', path='/static/js/script.js') }}"></script>
+    <footer>
+        <p>Powered by Tesseract & FastAPI • <span id="currentYear"></span></p>
+    </footer>
+</div>
+
+<script src="{{ url_for('static', path='js/script.js') }}"></script>
 </body>
 </html>

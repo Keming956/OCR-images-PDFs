@@ -225,6 +225,28 @@ header h1 {
     100% { transform: rotate(360deg); }
 }
 
+/* Zone de texte manuelle */
+#manualInput {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #ced4da;
+    resize: vertical;
+    font-size: 1rem;
+    line-height: 1.6;
+    background-color: #fff;
+    box-shadow: var(--box-shadow);
+}
+
+.manual-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 0.8rem;
+}
+
+/* Modal caméra */
 .modal {
     display: none;
     position: fixed;
@@ -305,5 +327,10 @@ footer {
 
     .process-btn {
         width: 100%;
+    }
+
+    .manual-actions {
+        justify-content: center;
+        flex-wrap: wrap;
     }
 }
