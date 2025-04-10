@@ -1,38 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // DOM elements
-    const dropZone = document.getElementById('dropZone');
+    // Elements principaux
     const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
     const selectFileBtn = document.getElementById('selectFileBtn');
     const fileInfo = document.getElementById('fileInfo');
     const cameraFileInfo = document.getElementById('cameraFileInfo');
     const processBtn = document.getElementById('processBtn');
+    const languageSelect = document.getElementById('language');
+    const detectedLang = document.getElementById('detectedLang');
     const resultContent = document.getElementById('resultContent');
     const processing = document.getElementById('processingIndicator');
-    const copyBtn = document.getElementById('copyBtn');
-    const readBtn = document.getElementById('readBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    const messageBox = document.getElementById('messageBox');
+    const additionalOutputs = document.getElementById('additionalOutputs');
+    const pdfLink = document.getElementById('pdfLink');
+    const boxedImgLink = document.getElementById('boxedImgLink');
 
     const manualInput = document.getElementById('manualInput');
     const manualCopyBtn = document.getElementById('manualCopyBtn');
     const manualReadBtn = document.getElementById('manualReadBtn');
     const manualDownloadBtn = document.getElementById('manualDownloadBtn');
 
-    const openCameraBtn = document.getElementById('openCameraBtn');
-    const cameraModal = document.getElementById('cameraModal');
-    const cameraClose = document.getElementById('cameraClose');
-    const cameraVideo = document.getElementById('cameraVideo');
-    const cameraCanvas = document.getElementById('cameraCanvas');
-    const captureBtn = document.getElementById('captureBtn');
-    const retakeBtn = document.getElementById('retakeBtn');
-    const usePhotoBtn = document.getElementById('usePhotoBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const readBtn = document.getElementById('readBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     let selectedFile = null;
     let capturedImageBlob = null;
     let stream = null;
 
-    // ----- Upload fichier -----
+    // ------ Fichier / Caméra ------
     selectFileBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', handleFileSelect);
@@ -64,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
         cameraFileInfo.innerHTML = '<p>Aucune photo capturée</p>';
     }
 
-    // ----- Lancer l'OCR -----
+    // ------ Traitement OCR ------
     processBtn.addEventListener('click', async () => {
         const formData = new FormData();
-        const lang = document.getElementById('language').value;
+        const lang = languageSelect.value;
         const manualText = manualInput.value.trim();
 
         if (manualText) {
@@ -77,14 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (selectedFile) {
             formData.append("file", selectedFile);
         } else {
-            alert('Veuillez importer une image, capturer une photo ou saisir du texte.');
+            showMessage("Veuillez importer une image, capturer une photo ou saisir du texte.", "error");
             return;
         }
 
         formData.append("lang", lang);
-
-        resultContent.style.display = "none";
         processing.style.display = "flex";
+        resultContent.style.display = "none";
+        additionalOutputs.style.display = "none";
 
         try {
             const response = await fetch("/ocr", {
@@ -95,93 +93,96 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
 
+            if (!response.ok) throw new Error("Erreur serveur");
+
             const result = await response.json();
-            resultContent.innerText = result.text;
+
+            resultContent.innerText = result.text || "(Aucun texte reconnu)";
+            detectedLang.textContent = result.detected_lang || "–";
+
+            if (result.pdf_path) {
+                pdfLink.href = result.pdf_path;
+                additionalOutputs.style.display = "block";
+            }
+
+            if (result.boxed_image_path) {
+                boxedImgLink.href = result.boxed_image_path;
+                additionalOutputs.style.display = "block";
+            }
+
         } catch (error) {
             console.error(error);
             resultContent.innerText = "Erreur lors de l'extraction OCR.";
+            showMessage("Une erreur est survenue lors de l’analyse OCR.", "error");
         }
 
         processing.style.display = "none";
         resultContent.style.display = "block";
     });
 
-    // ----- OCR Buttons -----
-    copyBtn.addEventListener('click', () => {
-        const text = resultContent.innerText;
+    // ------ Fonctions OCR Output ------
+    copyBtn.addEventListener('click', () => handleCopy(resultContent.innerText, copyBtn));
+    manualCopyBtn.addEventListener('click', () => handleCopy(manualInput.value, manualCopyBtn));
+
+    function handleCopy(text, btn) {
         if (!text.trim()) return;
         navigator.clipboard.writeText(text);
-        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => {
-            copyBtn.innerHTML = '<i class="far fa-copy"></i>';
-        }, 2000);
-    });
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="far fa-copy"></i>', 2000);
+    }
 
-    readBtn.addEventListener('click', () => {
-        const text = resultContent.innerText;
+    readBtn.addEventListener('click', () => speakText(resultContent.innerText));
+    manualReadBtn.addEventListener('click', () => speakText(manualInput.value));
+
+    function speakText(text) {
         if (!text.trim()) return;
-        const lang = document.getElementById('language').value;
+        const lang = languageSelect.value;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
         speechSynthesis.speak(utterance);
-    });
+    }
 
-    downloadBtn.addEventListener('click', () => {
-        const text = resultContent.innerText;
+    downloadBtn.addEventListener('click', () => downloadText(resultContent.innerText, "texte_ocr.txt"));
+    manualDownloadBtn.addEventListener('click', () => downloadText(manualInput.value, "texte_manuel.txt"));
+
+    function downloadText(text, filename) {
         if (!text.trim()) return;
         const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "texte_ocr.txt";
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
-    });
+    }
 
-    // ----- Manuel Buttons -----
-    manualCopyBtn.addEventListener('click', () => {
-        const text = manualInput.value;
-        if (!text.trim()) return;
-        navigator.clipboard.writeText(text);
-        manualCopyBtn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => {
-            manualCopyBtn.innerHTML = '<i class="far fa-copy"></i>';
-        }, 2000);
-    });
+    // ------ Message System ------
+    function showMessage(msg, type = "success") {
+        messageBox.textContent = msg;
+        messageBox.className = `message-box ${type}`;
+        messageBox.style.display = "block";
+        setTimeout(() => messageBox.style.display = "none", 4000);
+    }
 
-    manualReadBtn.addEventListener('click', () => {
-        const text = manualInput.value;
-        if (!text.trim()) return;
-        const lang = document.getElementById('language').value;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        speechSynthesis.speak(utterance);
-    });
+    // ------ Caméra ------
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraClose = document.getElementById('cameraClose');
+    const cameraVideo = document.getElementById('cameraVideo');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const usePhotoBtn = document.getElementById('usePhotoBtn');
 
-    manualDownloadBtn.addEventListener('click', () => {
-        const text = manualInput.value;
-        if (!text.trim()) return;
-        const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "texte_manuel.txt";
-        document.body.appendChild(a);
-        a.click();
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-    });
-
-    // ----- Caméra -----
     openCameraBtn.addEventListener('click', async () => {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true });
             cameraVideo.srcObject = stream;
             cameraModal.style.display = "block";
-        } catch (err) {
-            alert("Accès à la caméra refusé ou non disponible.");
+        } catch {
+            showMessage("Accès à la caméra refusé ou indisponible.", "error");
         }
     });
 

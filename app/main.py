@@ -1,25 +1,33 @@
 from fastapi import FastAPI, UploadFile, File, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
 
-from app.ocr import perform_ocr
+from app.ocr import (
+    perform_ocr,
+    draw_bounding_boxes,
+    pdf_to_images,
+    generate_searchable_pdf,
+    clean_text
+)
+
 import os
 import shutil
 import uuid
+from langdetect import detect
 
 app = FastAPI()
 
-# Dossiers statiques (CSS, JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Dossier de templates HTML
 templates = Jinja2Templates(directory="templates")
 
-# Dossier pour les fichiers uploadés
 UPLOAD_FOLDER = "uploaded_files"
+OUTPUT_FOLDER = "ocr_outputs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+PDF_EXTENSION = ".pdf"
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -33,9 +41,12 @@ async def ocr_endpoint(
     manual_input: str = Form("")
 ):
     text = ""
+    detected_lang = lang
+    pdf_generated_path = ""
+    boxed_image_path = ""
 
-    if file and file.filename != "":
-        file_ext = os.path.splitext(file.filename)[-1]
+    if file and file.filename:
+        file_ext = os.path.splitext(file.filename)[-1].lower()
         temp_filename = f"{uuid.uuid4()}{file_ext}"
         temp_path = os.path.join(UPLOAD_FOLDER, temp_filename)
 
@@ -43,7 +54,37 @@ async def ocr_endpoint(
             shutil.copyfileobj(file.file, f)
 
         try:
-            text = perform_ocr(temp_path, lang=lang)
+            # --- Si PDF → convertir pages en images et OCR chaque page
+            if file_ext == PDF_EXTENSION:
+                pages = pdf_to_images(temp_path, output_folder=UPLOAD_FOLDER)
+                all_texts = [perform_ocr(img_path, lang=lang) for img_path in pages]
+                text = "\n\n".join(all_texts)
+
+                # PDF consultable
+                pdf_output = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.pdf")
+                generate_searchable_pdf(pages[0], output_path=pdf_output, lang=lang)
+                pdf_generated_path = pdf_output
+
+            elif file_ext in ALLOWED_IMAGE_EXTENSIONS:
+                # OCR normal
+                text = perform_ocr(temp_path, lang=lang)
+
+                # Génération image avec boîtes
+                boxed_img = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.png")
+                draw_bounding_boxes(temp_path, output_path=boxed_img, lang=lang)
+                boxed_image_path = boxed_img
+
+                # PDF consultable
+                pdf_output = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.pdf")
+                generate_searchable_pdf(temp_path, output_path=pdf_output, lang=lang)
+                pdf_generated_path = pdf_output
+
+            # Détection automatique de langue
+            try:
+                detected_lang = detect(text)
+            except Exception:
+                pass
+
         except Exception as e:
             text = f"Erreur lors de l'analyse OCR : {e}"
         finally:
@@ -51,15 +92,27 @@ async def ocr_endpoint(
 
     elif manual_input.strip():
         text = manual_input.strip()
+        try:
+            detected_lang = detect(text)
+        except Exception:
+            pass
     else:
         text = "Aucun fichier ni texte saisi."
 
-    # Si appel JS → retour JSON
+    # Réponse AJAX (fetch JS)
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return JSONResponse(content={"text": text})
+        return JSONResponse(content={
+            "text": text,
+            "detected_lang": detected_lang,
+            "pdf_path": pdf_generated_path,
+            "boxed_image_path": boxed_image_path
+        })
 
-    # Sinon affichage template HTML classique
+    # Sinon affichage HTML classique
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "text": text
+        "text": text,
+        "detected_lang": detected_lang,
+        "pdf_path": pdf_generated_path,
+        "boxed_image_path": boxed_image_path
     })

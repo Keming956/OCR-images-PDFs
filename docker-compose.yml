@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - .:/app  # Permet le rechargement des fichiers sans rebuild
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped

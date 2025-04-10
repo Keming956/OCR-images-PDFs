@@ -4,3 +4,6 @@ python-multipart
 pytesseract
 jinja2
 Pillow
+opencv-python
+pdf2image
+langdetect

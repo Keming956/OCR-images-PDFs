@@ -11,12 +11,13 @@
 <div class="container">
     <header>
         <h1><i class="fas fa-eye"></i> OCR Vision</h1>
-        <p class="subtitle">Extraction de texte avec FastAPI + Tesseract</p>
+        <p class="subtitle">Extraction de texte avec FastAPI + Tesseract + OpenCV</p>
     </header>
 
     <main>
         <!-- Upload & Caméra -->
         <section class="input-options" aria-label="Options d'import">
+            <!-- Upload Fichier -->
             <div class="input-option" aria-labelledby="uploadLabel">
                 <h3 id="uploadLabel"><i class="fas fa-file-upload"></i> Importer un fichier</h3>
                 <div class="drop-zone" id="dropZone" role="button" tabindex="0">
@@ -25,11 +26,10 @@
                     <button class="btn" id="selectFileBtn">Sélectionner un fichier</button>
                     <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none;">
                 </div>
-                <div class="file-info" id="fileInfo">
-                    <p>Aucun fichier sélectionné</p>
-                </div>
+                <div class="file-info" id="fileInfo"><p>Aucun fichier sélectionné</p></div>
             </div>
 
+            <!-- Caméra -->
             <div class="input-option" aria-labelledby="cameraLabel">
                 <h3 id="cameraLabel"><i class="fas fa-camera"></i> Prendre une photo</h3>
                 <div class="camera-preview" id="cameraPreview">
@@ -37,9 +37,7 @@
                     <p>Capturez du texte avec votre caméra</p>
                     <button class="btn" id="openCameraBtn">Ouvrir la caméra</button>
                 </div>
-                <div class="file-info" id="cameraFileInfo">
-                    <p>Aucune photo capturée</p>
-                </div>
+                <div class="file-info" id="cameraFileInfo"><p>Aucune photo capturée</p></div>
             </div>
         </section>
 
@@ -54,6 +52,10 @@
                     <option value="deu">Allemand</option>
                     <option value="ita">Italien</option>
                 </select>
+            </div>
+            <div class="option">
+                <label>Langue détectée :</label>
+                <span id="detectedLang" class="lang-indicator">–</span>
             </div>
             <button class="btn process-btn" id="processBtn">
                 <i class="fas fa-cogs"></i> Extraire le texte
@@ -85,6 +87,15 @@
                 <div class="spinner"></div>
                 <p>Analyse en cours...</p>
             </div>
+
+            <div id="additionalOutputs" style="display:none;">
+                <p class="output-info">
+                    <strong>PDF consultable :</strong> <a id="pdfLink" href="#" target="_blank">Télécharger</a><br>
+                    <strong>Image annotée :</strong> <a id="boxedImgLink" href="#" target="_blank">Voir</a>
+                </p>
+            </div>
+
+            <div id="messageBox" class="message-box" aria-live="polite"></div>
         </section>
 
         <!-- Saisie manuelle -->
@@ -92,21 +103,15 @@
             <h2><i class="fas fa-keyboard"></i> Saisir manuellement</h2>
             <textarea id="manualInput" placeholder="Écrivez ici un texte à faire lire, copier ou télécharger..."></textarea>
             <div class="manual-actions">
-                <button class="btn icon-btn" id="manualCopyBtn" title="Copier">
-                    <i class="far fa-copy"></i>
-                </button>
-                <button class="btn icon-btn" id="manualReadBtn" title="Lire">
-                    <i class="fas fa-volume-up"></i>
-                </button>
-                <button class="btn icon-btn" id="manualDownloadBtn" title="Télécharger">
-                    <i class="fas fa-download"></i>
-                </button>
+                <button class="btn icon-btn" id="manualCopyBtn" title="Copier"><i class="far fa-copy"></i></button>
+                <button class="btn icon-btn" id="manualReadBtn" title="Lire"><i class="fas fa-volume-up"></i></button>
+                <button class="btn icon-btn" id="manualDownloadBtn" title="Télécharger"><i class="fas fa-download"></i></button>
             </div>
         </section>
     </main>
 
     <!-- Modal Caméra -->
-    <div id="cameraModal" class="modal" role="dialog" aria-modal="true">
+    <div id="cameraModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cameraLabel">
         <div class="modal-content">
             <button class="close" id="cameraClose" title="Fermer la caméra" aria-label="Fermer">&times;</button>
             <h3>Prendre une photo</h3>
@@ -121,7 +126,7 @@
     </div>
 
     <footer>
-        <p>Powered by Tesseract & FastAPI • <span id="currentYear"></span></p>
+        <p>Powered by Tesseract, OpenCV & FastAPI • <span id="currentYear"></span></p>
     </footer>
 </div>
 
