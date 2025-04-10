@@ -34,8 +34,8 @@
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/votre-utilisateur/ocr-vision.git
-cd ocr-vision
+git clone https://github.com/Keming956/OCR-images-PDFs.git
+cd OCR-images-PDFs
 ```
 
 ### 2. Construire l’image Docker
