@@ -126,5 +126,9 @@ Ce projet est libre et open-source sous licence MIT.
 
 ## 👩‍💻 Auteure
 
-Projet développé par **Lidan Zhang**, étudiante M2 TAL – spécialité NLP.  
-Contact : lidan.zhang@…
+Projet développé par
+**Lidan Zhang**, étudiante M2 TAL – spécialité NLP.  
+Contact : zhanglidan2002@gmail.com
+**Keming Yi**, étudiant M2 TAL – spécialité NLP.
+**Léa Manet**, étudiante M2 TAL – spécialité NLP.
+
