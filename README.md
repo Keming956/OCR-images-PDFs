@@ -43,20 +43,27 @@ Accéder ensuite à l'application sur http://localhost:8000
 ```
 ocr-vision/
 ├── app/
-│   ├── main.py            # FastAPI backend
-│   └── ocr.py             # Fonctions OCR, OpenCV, PDF, etc.
+│   ├── main.py              # Backend FastAPI : endpoints, gestion des requêtes
+│   └── ocr.py               # Fonctions OCR : Tesseract, OpenCV, PDF, prétraitement
+│
 ├── templates/
-│   └── index.html         # Interface HTML (Jinja2)
+│   └── index.html           # Interface utilisateur (Jinja2 + HTML accessible)
+│
 ├── static/
-│   ├── css/styles.css     # Feuilles de style
-│   ├── js/script.js       # Logique client
-│   └── favicon.png        # Icône
-├── uploaded_files/        # (Auto-créé) Fichiers uploadés
-├── ocr_outputs/           # (Auto-créé) PDF générés, images annotées
-├── requirements.txt       # Dépendances Python
-├── Dockerfile             # Image Docker
-├── docker-compose.yml     # Conteneurisation
-└── README.md              # Ce fichier
+│   ├── css/
+│   │   └── styles.css       # Style de l’interface : responsive, thème sombre, accessibilité
+│   ├── js/
+│   │   └── script.js        # Logique front : import, OCR, TTS, caméra, interactions
+│   └── favicon.png          # Icône de l’application
+│
+├── uploaded_files/          # 📂 Auto-créé – Fichiers uploadés (images, PDF) pour analyse
+├── ocr_outputs/             # 📂 Auto-créé – Fichiers résultats : PDF OCR, images annotées
+│
+├── requirements.txt         # Liste des dépendances Python (FastAPI, Tesseract, OpenCV, etc.)
+├── Dockerfile               # Configuration de l’image Docker (OCR en local)
+├── docker-compose.yml       # Orchestration des conteneurs (build + run serveur)
+├── README.md                # Présentation du projet, instructions d’installation
+└── cahier_des_charges.md    # Spécifications fonctionnelles et techniques détaillées
 ```
 
 ## Langues OCR prises en charge
