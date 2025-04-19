@@ -8,19 +8,19 @@
 
 ---
 
-## 🚀 Fonctionnalités
+## Fonctionnalités
 
-- 📷 Upload d'image ou capture via webcam
-- 🔤 Détection automatique de la langue
-- 🧠 Prétraitement d'image avec OpenCV (sharpen, threshold, upscale)
-- 🖼️ Affichage de l’image OCRée avec **boîtes de texte**
-- 📄 Génération de PDF consultable avec OCR
-- 📋 Copier, 🔊 lire à voix haute, ou 📥 télécharger les textes extraits
-- 🌐 Interface web accessible et responsive
+- Upload d'image ou capture via webcam
+- Détection automatique de la langue
+- Prétraitement d'image avec OpenCV (sharpen, threshold, upscale)
+- Affichage de l’image OCRée avec **boîtes de texte**
+- Génération de PDF consultable avec OCR
+- Copier, 🔊 lire à voix haute, ou 📥 télécharger les textes extraits
+- Interface web accessible et responsive
 
 ---
 
-## 🧰 Technologies
+## Technologies
 
 - **Backend** : FastAPI, pytesseract, pdf2image, OpenCV
 - **Frontend** : HTML, CSS, JavaScript (Vanilla)
@@ -29,7 +29,7 @@
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Cloner le dépôt
 
@@ -55,7 +55,7 @@ Accédez ensuite à l'application sur :
 
 ---
 
-## 📁 Arborescence
+## Arborescence
 
 ```
 ocr-vision/
@@ -75,17 +75,17 @@ ocr-vision/
 
 ---
 
-## 📚 Prétraitement OpenCV utilisé
+## Prétraitement OpenCV utilisé
 
-- 🔍 Agrandissement automatique si texte trop petit
-- ⚫ Conversion en niveaux de gris
-- 🔇 Réduction du bruit
-- ✏️ Sharpen (filtre Laplacien)
-- ⚪ Binarisation adaptative
+- Agrandissement automatique si texte trop petit
+- Conversion en niveaux de gris
+- Réduction du bruit
+- Sharpen (filtre Laplacien)
+- Binarisation adaptative
 
 ---
 
-## 🗣️ API TTS (lecture vocale)
+## API TTS (lecture vocale)
 
 Utilise l’API `SpeechSynthesis` native du navigateur. Fonctionne parfaitement sous :
 - Chrome (Windows/Linux/macOS)
@@ -94,7 +94,7 @@ Utilise l’API `SpeechSynthesis` native du navigateur. Fonctionne parfaitement 
 
 ---
 
-## 🧪 Tests recommandés
+## Tests recommandés
 
 - `images/poème.png` : OCR propre en français
 - `images/brouillé.jpg` : vérifie les effets du prétraitement
@@ -115,20 +115,12 @@ libxext6
 libxrender-dev
 libglib2.0-0
 ```
-
 ---
 
-## 📝 Licence
-
-Ce projet est libre et open-source sous licence MIT.
-
----
-
-## 👩‍💻 Auteure
+## Auteurs
 
 Projet développé par
-**Lidan Zhang**, étudiante M2 TAL – spécialité NLP.  
-Contact : zhanglidan2002@gmail.com
-**Keming Yi**, étudiant M2 TAL – spécialité NLP.
-**Léa Manet**, étudiante M2 TAL – spécialité NLP.
+**Léa Manet**, étudiante M2 NLP.
+**Lidan Zhang**, étudiante M2 NLP.  
+**Keming Yi**, étudiant M2 NLP.
 
