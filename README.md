@@ -1,11 +1,4 @@
-Très bien, voici une version **sans emoji** du `README.md` pour ton projet **OCR Vision** :
-
----
-
-### `README.md`
-
-```markdown
-# OCR Vision
+## OCR Vision
 
 Application web OCR (Reconnaissance Optique de Caractères) pour extraire du texte depuis des images ou des PDF, en utilisant FastAPI, Tesseract, OpenCV et Docker.
 
