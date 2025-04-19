@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         URL.revokeObjectURL(a.href);
     }
 
-    // Reset
+    // Réinitialisation complète
     resetBtn?.addEventListener("click", () => {
         fileInput.value = "";
         manualInput.value = "";
@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         capturedImageBlob = null;
         fileInfo.innerHTML = "<p>Aucun fichier sélectionné</p>";
         cameraFileInfo.innerHTML = "<p>Aucune photo capturée</p>";
-        resultContent.innerText = "";
+        resultContent.innerHTML = `<p class="placeholder">Le texte extrait apparaîtra ici...</p>`;
         detectedLang.textContent = "–";
         additionalOutputs.style.display = "none";
     });
