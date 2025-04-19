@@ -50,9 +50,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateThemeIcon() {
         if (!themeBtn) return;
         const isDark = document.body.classList.contains("dark");
-        themeBtn.innerHTML = `<i class="fas fa-${isDark ? "sun" : "moon"}"></i>`;
-    }
-
+        themeBtn.innerHTML = `
+          <i class="fas fa-${isDark ? "sun" : "moon"}"></i>
+          <span id="themeLabel">${isDark ? "Clair" : "Sombre"}</span>
+        `;
+      }
+      
+      
     // Fichier import
     selectFileBtn.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
