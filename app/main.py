@@ -18,9 +18,11 @@ from langdetect import detect
 
 app = FastAPI()
 
+# Dossiers statiques et templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# Dossiers de fichiers
 UPLOAD_FOLDER = "uploaded_files"
 OUTPUT_FOLDER = "ocr_outputs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -29,9 +31,11 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
 PDF_EXTENSION = ".pdf"
 
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.post("/ocr", response_class=HTMLResponse)
 async def ocr_endpoint(
@@ -54,32 +58,27 @@ async def ocr_endpoint(
             shutil.copyfileobj(file.file, f)
 
         try:
-            # --- Si PDF → convertir pages en images et OCR chaque page
             if file_ext == PDF_EXTENSION:
                 pages = pdf_to_images(temp_path, output_folder=UPLOAD_FOLDER)
-                all_texts = [perform_ocr(img_path, lang=lang) for img_path in pages]
+                all_texts = [perform_ocr(img, lang=lang) for img in pages]
                 text = "\n\n".join(all_texts)
 
-                # PDF consultable
                 pdf_output = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.pdf")
                 generate_searchable_pdf(pages[0], output_path=pdf_output, lang=lang)
                 pdf_generated_path = pdf_output
 
             elif file_ext in ALLOWED_IMAGE_EXTENSIONS:
-                # OCR normal
                 text = perform_ocr(temp_path, lang=lang)
 
-                # Génération image avec boîtes
                 boxed_img = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.png")
                 draw_bounding_boxes(temp_path, output_path=boxed_img, lang=lang)
                 boxed_image_path = boxed_img
 
-                # PDF consultable
                 pdf_output = os.path.join(OUTPUT_FOLDER, f"{uuid.uuid4()}.pdf")
                 generate_searchable_pdf(temp_path, output_path=pdf_output, lang=lang)
                 pdf_generated_path = pdf_output
 
-            # Détection automatique de langue
+            # Détection automatique de la langue
             try:
                 detected_lang = detect(text)
             except Exception:
@@ -87,6 +86,7 @@ async def ocr_endpoint(
 
         except Exception as e:
             text = f"Erreur lors de l'analyse OCR : {e}"
+
         finally:
             os.remove(temp_path)
 
@@ -99,7 +99,6 @@ async def ocr_endpoint(
     else:
         text = "Aucun fichier ni texte saisi."
 
-    # Réponse AJAX (fetch JS)
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JSONResponse(content={
             "text": text,
@@ -108,7 +107,6 @@ async def ocr_endpoint(
             "boxed_image_path": boxed_image_path
         })
 
-    # Sinon affichage HTML classique
     return templates.TemplateResponse("index.html", {
         "request": request,
         "text": text,

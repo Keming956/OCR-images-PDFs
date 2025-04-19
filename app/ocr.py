@@ -9,9 +9,8 @@ import os
 
 def preprocess_image_cv(image_cv: np.ndarray) -> np.ndarray:
     """
-    Prépare l’image : upscale, grayscale, denoise, sharpen, blur + binarisation Otsu.
+    Prétraitement d'image : upscale, gris, débruitage, netteté, flou, seuillage Otsu.
     """
-    # Upscale si petite image
     if image_cv.shape[1] < 800:
         image_cv = cv2.resize(image_cv, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
 
@@ -20,12 +19,13 @@ def preprocess_image_cv(image_cv: np.ndarray) -> np.ndarray:
     sharpened = cv2.filter2D(denoised, -1, np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]))
     blurred = cv2.GaussianBlur(sharpened, (3, 3), 0)
     _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
     return binary
 
 
 def clean_text(text: str) -> str:
     """
-    Nettoie le texte OCR : supprime les lignes vides et espaces multiples.
+    Nettoyage du texte OCR : suppression lignes vides et espaces multiples.
     """
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines).strip()
@@ -33,7 +33,7 @@ def clean_text(text: str) -> str:
 
 def perform_ocr(image_path: str, lang: str = "fra") -> str:
     """
-    Effectue l'OCR avec prétraitement OpenCV, debug visuel, et config Tesseract.
+    OCR avec Tesseract sur une image prétraitée. Mode PSM 6.
     """
     image_cv = cv2.imread(image_path)
     if image_cv is None:
@@ -41,11 +41,6 @@ def perform_ocr(image_path: str, lang: str = "fra") -> str:
 
     processed = preprocess_image_cv(image_cv)
 
-    # DEBUG : Sauvegarder images pour inspection
-    cv2.imwrite("debug_original.png", image_cv)
-    cv2.imwrite("debug_processed.png", processed)
-
-    # Config explicite pour Tesseract : mode 6 (lignes de texte)
     config = r"--oem 3 --psm 6"
     raw_text = pytesseract.image_to_string(processed, lang=lang, config=config)
 
@@ -54,14 +49,16 @@ def perform_ocr(image_path: str, lang: str = "fra") -> str:
 
 def draw_bounding_boxes(image_path: str, output_path: str, lang: str = "fra"):
     """
-    Génère une image avec boîtes vertes autour du texte détecté.
+    Dessine des boîtes autour des textes détectés sur l'image.
     """
     image_cv = cv2.imread(image_path)
     if image_cv is None:
         raise RuntimeError(f"Impossible de lire l'image : {image_path}")
 
     processed = preprocess_image_cv(image_cv)
-    data = pytesseract.image_to_data(processed, lang=lang, config="--psm 6", output_type=Output.DICT)
+    data = pytesseract.image_to_data(
+        processed, lang=lang, config="--psm 6", output_type=Output.DICT
+    )
 
     for i in range(len(data["text"])):
         if int(data["conf"][i]) == -1 or not data["text"][i].strip():
@@ -74,22 +71,24 @@ def draw_bounding_boxes(image_path: str, output_path: str, lang: str = "fra"):
 
 def generate_searchable_pdf(image_path: str, output_path: str, lang: str = "fra"):
     """
-    Crée un PDF OCR consultable depuis une image.
+    Génére un PDF OCR consultable à partir d’une image.
     """
     pdf_bytes = pytesseract.image_to_pdf_or_hocr(image_path, lang=lang, extension='pdf')
     with open(output_path, "wb") as f:
         f.write(pdf_bytes)
 
 
-def pdf_to_images(pdf_path: str, output_folder: str = "temp_pages") -> list:
+def pdf_to_images(pdf_path: str, output_folder: str = "temp_pages") -> list[str]:
     """
-    Convertit un PDF en images (1 image par page).
+    Convertit un PDF en une liste d’images PNG.
     """
     os.makedirs(output_folder, exist_ok=True)
     pages = convert_from_path(pdf_path, fmt='png', output_folder=output_folder)
     paths = []
+
     for i, page in enumerate(pages):
         img_path = os.path.join(output_folder, f"page_{i + 1}.png")
         page.save(img_path, "PNG")
         paths.append(img_path)
+
     return paths

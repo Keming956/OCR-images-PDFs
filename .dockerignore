@@ -1,0 +1,34 @@
+# Dossiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Dépendances locales (si jamais)
+venv/
+.env
+*.egg-info/
+
+# Résultats OCR / fichiers générés
+uploaded_files/
+ocr_outputs/
+debug_original.png
+debug_processed.png
+
+# PDF et images intermédiaires
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+
+# Fichiers de test ou jetables
+.DS_Store
+Thumbs.db

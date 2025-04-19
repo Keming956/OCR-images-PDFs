@@ -1,60 +1,76 @@
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
+// script.js – OCR Vision avec OCR, thème sombre, raccourcis clavier, caméra, et synthèse vocale multilingue
 
-    // Elements principaux
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const selectFileBtn = document.getElementById('selectFileBtn');
-    const fileInfo = document.getElementById('fileInfo');
-    const cameraFileInfo = document.getElementById('cameraFileInfo');
-    const processBtn = document.getElementById('processBtn');
-    const languageSelect = document.getElementById('language');
-    const detectedLang = document.getElementById('detectedLang');
-    const resultContent = document.getElementById('resultContent');
-    const processing = document.getElementById('processingIndicator');
-    const messageBox = document.getElementById('messageBox');
-    const additionalOutputs = document.getElementById('additionalOutputs');
-    const pdfLink = document.getElementById('pdfLink');
-    const boxedImgLink = document.getElementById('boxedImgLink');
+document.addEventListener("DOMContentLoaded", () => {
+    const $ = id => document.getElementById(id);
 
-    const manualInput = document.getElementById('manualInput');
-    const manualCopyBtn = document.getElementById('manualCopyBtn');
-    const manualReadBtn = document.getElementById('manualReadBtn');
-    const manualDownloadBtn = document.getElementById('manualDownloadBtn');
+    const themeBtn = $("toggleThemeBtn");
+    const currentYear = $("currentYear");
+    const fileInput = $("fileInput");
+    const selectFileBtn = $("selectFileBtn");
+    const dropZone = $("dropZone");
+    const fileInfo = $("fileInfo");
+    const cameraFileInfo = $("cameraFileInfo");
+    const processBtn = $("processBtn");
+    const resetBtn = $("resetBtn");
+    const languageSelect = $("language");
+    const detectedLang = $("detectedLang");
+    const resultContent = $("resultContent");
+    const processing = $("processingIndicator");
+    const additionalOutputs = $("additionalOutputs");
+    const pdfLink = $("pdfLink");
+    const boxedImgLink = $("boxedImgLink");
+    const messageBox = $("messageBox");
 
-    const copyBtn = document.getElementById('copyBtn');
-    const readBtn = document.getElementById('readBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    const manualInput = $("manualInput");
+    const manualCopyBtn = $("manualCopyBtn");
+    const manualReadBtn = $("manualReadBtn");
+    const manualDownloadBtn = $("manualDownloadBtn");
+
+    const copyBtn = $("copyBtn");
+    const readBtn = $("readBtn");
+    const downloadBtn = $("downloadBtn");
 
     let selectedFile = null;
     let capturedImageBlob = null;
     let stream = null;
 
-    // ------ Fichier / Caméra ------
-    selectFileBtn.addEventListener('click', () => fileInput.click());
+    if (currentYear) currentYear.textContent = new Date().getFullYear();
 
-    fileInput.addEventListener('change', handleFileSelect);
+    // Thème sombre
+    const storedTheme = localStorage.getItem("ocr-theme");
+    if (storedTheme === "dark") document.body.classList.add("dark");
+    updateThemeIcon();
 
-    dropZone.addEventListener('dragover', e => {
-        e.preventDefault();
-        dropZone.classList.add('active');
+    themeBtn?.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        localStorage.setItem("ocr-theme", document.body.classList.contains("dark") ? "dark" : "light");
+        updateThemeIcon();
     });
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('active');
-    });
+    function updateThemeIcon() {
+        if (!themeBtn) return;
+        const isDark = document.body.classList.contains("dark");
+        themeBtn.innerHTML = `<i class="fas fa-${isDark ? "sun" : "moon"}"></i>`;
+    }
 
-    dropZone.addEventListener('drop', e => {
+    // Fichier import
+    selectFileBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+    dropZone.addEventListener("dragover", e => {
         e.preventDefault();
-        dropZone.classList.remove('active');
+        dropZone.classList.add("active");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("active"));
+    dropZone.addEventListener("drop", e => {
+        e.preventDefault();
+        dropZone.classList.remove("active");
         if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            handleFileSelect({ target: fileInput });
+            handleFile(e.dataTransfer.files[0]);
         }
     });
 
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
+    function handleFile(file) {
         if (!file) return;
         selectedFile = file;
         capturedImageBlob = null;
@@ -62,67 +78,76 @@ document.addEventListener('DOMContentLoaded', () => {
         cameraFileInfo.innerHTML = '<p>Aucune photo capturée</p>';
     }
 
-    // ------ Traitement OCR ------
-    processBtn.addEventListener('click', async () => {
+    // OCR
+    processBtn.addEventListener("click", lancerOCR);
+    document.addEventListener("keydown", e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") lancerOCR();
+    });
+
+    async function lancerOCR() {
         const formData = new FormData();
         const lang = languageSelect.value;
         const manualText = manualInput.value.trim();
 
-        if (manualText) {
-            formData.append("manual_input", manualText);
-        } else if (capturedImageBlob) {
-            formData.append("file", capturedImageBlob, "camera.jpg");
-        } else if (selectedFile) {
-            formData.append("file", selectedFile);
-        } else {
-            showMessage("Veuillez importer une image, capturer une photo ou saisir du texte.", "error");
-            return;
-        }
+        if (manualText) formData.append("manual_input", manualText);
+        else if (capturedImageBlob) formData.append("file", capturedImageBlob, "photo.jpg");
+        else if (selectedFile) formData.append("file", selectedFile);
+        else return showMessage("Veuillez importer un fichier ou entrer un texte.", "error");
 
         formData.append("lang", lang);
-        processing.style.display = "flex";
-        resultContent.style.display = "none";
-        additionalOutputs.style.display = "none";
+
+        toggleLoading(true);
 
         try {
             const response = await fetch("/ocr", {
                 method: "POST",
-                headers: {
-                    "x-requested-with": "XMLHttpRequest"
-                },
+                headers: { "x-requested-with": "XMLHttpRequest" },
                 body: formData
             });
-
             if (!response.ok) throw new Error("Erreur serveur");
-
-            const result = await response.json();
-
-            resultContent.innerText = result.text || "(Aucun texte reconnu)";
-            detectedLang.textContent = result.detected_lang || "–";
-
-            if (result.pdf_path) {
-                pdfLink.href = result.pdf_path;
-                additionalOutputs.style.display = "block";
-            }
-
-            if (result.boxed_image_path) {
-                boxedImgLink.href = result.boxed_image_path;
-                additionalOutputs.style.display = "block";
-            }
-
-        } catch (error) {
-            console.error(error);
-            resultContent.innerText = "Erreur lors de l'extraction OCR.";
-            showMessage("Une erreur est survenue lors de l’analyse OCR.", "error");
+            const data = await response.json();
+            updateResult(data);
+        } catch (e) {
+            console.error(e);
+            showMessage("Erreur OCR : " + e.message, "error");
         }
 
-        processing.style.display = "none";
-        resultContent.style.display = "block";
-    });
+        toggleLoading(false);
+    }
 
-    // ------ Fonctions OCR Output ------
-    copyBtn.addEventListener('click', () => handleCopy(resultContent.innerText, copyBtn));
-    manualCopyBtn.addEventListener('click', () => handleCopy(manualInput.value, manualCopyBtn));
+    function updateResult(data) {
+        resultContent.innerText = data.text || "(Aucun texte reconnu)";
+        detectedLang.textContent = data.detected_lang || "–";
+        pdfLink.href = data.pdf_path || "#";
+        boxedImgLink.href = data.boxed_image_path || "#";
+        additionalOutputs.style.display = (data.pdf_path || data.boxed_image_path) ? "block" : "none";
+    }
+
+    function toggleLoading(state) {
+        processing.style.display = state ? "flex" : "none";
+        resultContent.style.display = state ? "none" : "block";
+        additionalOutputs.style.display = "none";
+    }
+
+    // Lecture vocale intelligente
+    function speakText(text) {
+        if (!text.trim()) return;
+        const lang = detectedLang.textContent || languageSelect.value;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = 1;
+        speechSynthesis.speak(utterance);
+    }
+
+    readBtn.addEventListener("click", () => speakText(resultContent.innerText));
+    manualReadBtn.addEventListener("click", () => speakText(manualInput.value));
+
+    // Copier / Télécharger
+    copyBtn.addEventListener("click", () => handleCopy(resultContent.innerText, copyBtn));
+    manualCopyBtn.addEventListener("click", () => handleCopy(manualInput.value, manualCopyBtn));
+
+    downloadBtn.addEventListener("click", () => downloadText(resultContent.innerText, "ocr_result.txt"));
+    manualDownloadBtn.addEventListener("click", () => downloadText(manualInput.value, "manual_text.txt"));
 
     function handleCopy(text, btn) {
         if (!text.trim()) return;
@@ -131,67 +156,52 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => btn.innerHTML = '<i class="far fa-copy"></i>', 2000);
     }
 
-    readBtn.addEventListener('click', () => speakText(resultContent.innerText));
-    manualReadBtn.addEventListener('click', () => speakText(manualInput.value));
-
-    function speakText(text) {
-        if (!text.trim()) return;
-        const lang = languageSelect.value;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        speechSynthesis.speak(utterance);
-    }
-
-    downloadBtn.addEventListener('click', () => downloadText(resultContent.innerText, "texte_ocr.txt"));
-    manualDownloadBtn.addEventListener('click', () => downloadText(manualInput.value, "texte_manuel.txt"));
-
     function downloadText(text, filename) {
         if (!text.trim()) return;
         const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url;
+        a.href = URL.createObjectURL(blob);
         a.download = filename;
-        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
     }
 
-    // ------ Message System ------
-    function showMessage(msg, type = "success") {
-        messageBox.textContent = msg;
-        messageBox.className = `message-box ${type}`;
-        messageBox.style.display = "block";
-        setTimeout(() => messageBox.style.display = "none", 4000);
-    }
+    // Reset
+    resetBtn?.addEventListener("click", () => {
+        fileInput.value = "";
+        manualInput.value = "";
+        selectedFile = null;
+        capturedImageBlob = null;
+        fileInfo.innerHTML = "<p>Aucun fichier sélectionné</p>";
+        cameraFileInfo.innerHTML = "<p>Aucune photo capturée</p>";
+        resultContent.innerText = "";
+        detectedLang.textContent = "–";
+        additionalOutputs.style.display = "none";
+    });
 
-    // ------ Caméra ------
-    const openCameraBtn = document.getElementById('openCameraBtn');
-    const cameraModal = document.getElementById('cameraModal');
-    const cameraClose = document.getElementById('cameraClose');
-    const cameraVideo = document.getElementById('cameraVideo');
-    const cameraCanvas = document.getElementById('cameraCanvas');
-    const captureBtn = document.getElementById('captureBtn');
-    const retakeBtn = document.getElementById('retakeBtn');
-    const usePhotoBtn = document.getElementById('usePhotoBtn');
+    // Caméra
+    const openCameraBtn = $("openCameraBtn");
+    const cameraModal = $("cameraModal");
+    const cameraClose = $("cameraClose");
+    const cameraVideo = $("cameraVideo");
+    const cameraCanvas = $("cameraCanvas");
+    const captureBtn = $("captureBtn");
+    const retakeBtn = $("retakeBtn");
+    const usePhotoBtn = $("usePhotoBtn");
 
-    openCameraBtn.addEventListener('click', async () => {
+    openCameraBtn.addEventListener("click", async () => {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true });
             cameraVideo.srcObject = stream;
             cameraModal.style.display = "block";
         } catch {
-            showMessage("Accès à la caméra refusé ou indisponible.", "error");
+            showMessage("Accès à la caméra refusé.", "error");
         }
     });
 
-    cameraClose.addEventListener('click', () => {
-        cameraModal.style.display = "none";
-        if (stream) stream.getTracks().forEach(track => track.stop());
-    });
+    cameraClose.addEventListener("click", closeCamera);
 
-    captureBtn.addEventListener('click', () => {
+    captureBtn.addEventListener("click", () => {
         cameraCanvas.style.display = "block";
         cameraCanvas.width = cameraVideo.videoWidth;
         cameraCanvas.height = cameraVideo.videoHeight;
@@ -202,27 +212,38 @@ document.addEventListener('DOMContentLoaded', () => {
         captureBtn.style.display = "none";
     });
 
-    retakeBtn.addEventListener('click', () => {
-        cameraCanvas.style.display = "none";
+    retakeBtn.addEventListener("click", () => {
         capturedImageBlob = null;
+        cameraCanvas.style.display = "none";
+        captureBtn.style.display = "inline-block";
         retakeBtn.style.display = "none";
         usePhotoBtn.style.display = "none";
-        captureBtn.style.display = "inline-block";
     });
 
-    usePhotoBtn.addEventListener('click', () => {
+    usePhotoBtn.addEventListener("click", () => {
         selectedFile = null;
-        fileInfo.innerHTML = '<p>Aucun fichier sélectionné</p>';
-        cameraFileInfo.innerHTML = "<p>Photo capturée prête à être traitée</p>";
+        fileInfo.innerHTML = "<p>Aucun fichier sélectionné</p>";
+        cameraFileInfo.innerHTML = "<p>Photo prête à l’analyse</p>";
+        closeCamera();
+    });
+
+    function closeCamera() {
         cameraModal.style.display = "none";
         if (stream) stream.getTracks().forEach(track => track.stop());
-    });
+    }
 
     function dataURLToBlob(dataURL) {
-        const [header, base64] = dataURL.split(',');
+        const [header, base64] = dataURL.split(",");
         const mime = header.match(/:(.*?);/)[1];
         const binary = atob(base64);
-        const array = Uint8Array.from(binary, char => char.charCodeAt(0));
+        const array = Uint8Array.from(binary, c => c.charCodeAt(0));
         return new Blob([array], { type: mime });
+    }
+
+    function showMessage(text, type = "success") {
+        messageBox.textContent = text;
+        messageBox.className = `message-box ${type}`;
+        messageBox.style.display = "block";
+        setTimeout(() => messageBox.style.display = "none", 4000);
     }
 });

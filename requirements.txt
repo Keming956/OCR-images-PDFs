@@ -1,9 +1,9 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 pytesseract
-jinja2
-Pillow
 opencv-python
+Pillow
 pdf2image
 langdetect
+Jinja2

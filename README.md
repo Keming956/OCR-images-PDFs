@@ -1,126 +1,89 @@
-# OCR Vision – Extraction de texte depuis images et PDF
-
-**OCR Vision** est une application web OCR (Reconnaissance Optique de Caractères) conçue en Python avec **FastAPI**, **Tesseract**, **OpenCV** et **pdf2image**. Elle permet d'extraire du texte depuis :
-- des **images** (JPEG, PNG, etc.)
-- des **PDF scannés**
-- des **photos prises depuis la caméra**
-- ou du **texte saisi manuellement**
+Très bien, voici une version **sans emoji** du `README.md` pour ton projet **OCR Vision** :
 
 ---
+
+### `README.md`
+
+```markdown
+# OCR Vision
+
+Application web OCR (Reconnaissance Optique de Caractères) pour extraire du texte depuis des images ou des PDF, en utilisant FastAPI, Tesseract, OpenCV et Docker.
 
 ## Fonctionnalités
 
-- Upload d'image ou capture via webcam
+- Import d’images ou capture depuis la caméra
+- Prise en charge des PDF
 - Détection automatique de la langue
-- Prétraitement d'image avec OpenCV (sharpen, threshold, upscale)
-- Affichage de l’image OCRée avec **boîtes de texte**
-- Génération de PDF consultable avec OCR
-- Copier, 🔊 lire à voix haute, ou 📥 télécharger les textes extraits
-- Interface web accessible et responsive
+- Lecture du texte reconnu avec la voix native (SpeechSynthesis)
+- Mode sombre / clair
+- Raccourci clavier Ctrl+Entrée pour lancer l’OCR
+- Téléchargement du texte ou du PDF consultable généré
+- Affichage des boîtes de texte détectées (bounding boxes)
+- Saisie manuelle du texte
 
----
+## Technologies utilisées
 
-## Technologies
+- Backend : FastAPI, pytesseract, pdf2image, langdetect
+- Frontend : HTML5, CSS3, JavaScript (vanilla), Web Speech API
+- OCR : Tesseract 5 + OpenCV (prétraitement)
+- Déploiement : Docker, Docker Compose
 
-- **Backend** : FastAPI, pytesseract, pdf2image, OpenCV
-- **Frontend** : HTML, CSS, JavaScript (Vanilla)
-- **OCR Engine** : Tesseract OCR
-- **Conteneurisation** : Docker + Docker Compose
-
----
-
-## Installation
+## Installation avec Docker
 
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/Keming956/OCR-images-PDFs.git
-cd OCR-images-PDFs
+git clone https://github.com/ton-utilisateur/ocr-vision.git
+cd ocr-vision
 ```
 
-### 2. Construire l’image Docker
+### 2. Lancer avec Docker Compose
 
 ```bash
-docker compose build
+sudo docker-compose up --build
 ```
 
-### 3. Lancer l’application
+Accéder ensuite à l'application sur http://localhost:8000
 
-```bash
-docker compose up
-```
-
-Accédez ensuite à l'application sur :  
-📍 [http://localhost:8000](http://localhost:8000)
-
----
-
-## Arborescence
+## Arborescence du projet
 
 ```
 ocr-vision/
 ├── app/
-│   ├── main.py             # API FastAPI
-│   ├── ocr.py              # Fonctions OCR, prétraitement, PDF, boîtes
-├── static/
-│   ├── css/styles.css      # Design frontend
-│   └── js/script.js        # Logique côté client (upload, caméra, TTS)
+│   ├── main.py            # FastAPI backend
+│   └── ocr.py             # Fonctions OCR, OpenCV, PDF, etc.
 ├── templates/
-│   └── index.html          # Interface utilisateur avec Jinja2
-├── Dockerfile              # Image Docker OCR-ready
-├── docker-compose.yml      # Lancement simplifié
-├── requirements.txt        # Dépendances Python
-└── README.md               # Documentation
+│   └── index.html         # Interface HTML (Jinja2)
+├── static/
+│   ├── css/styles.css     # Feuilles de style
+│   ├── js/script.js       # Logique client
+│   └── favicon.png        # Icône
+├── uploaded_files/        # (Auto-créé) Fichiers uploadés
+├── ocr_outputs/           # (Auto-créé) PDF générés, images annotées
+├── requirements.txt       # Dépendances Python
+├── Dockerfile             # Image Docker
+├── docker-compose.yml     # Conteneurisation
+└── README.md              # Ce fichier
 ```
 
----
+## Langues OCR prises en charge
 
-## Prétraitement OpenCV utilisé
+Assurez-vous que les modèles suivants sont bien installés dans l’image Docker (ils le sont par défaut dans le Dockerfile) :
 
-- Agrandissement automatique si texte trop petit
-- Conversion en niveaux de gris
-- Réduction du bruit
-- Sharpen (filtre Laplacien)
-- Binarisation adaptative
+- fra : Français
+- eng : Anglais
+- spa : Espagnol
+- deu : Allemand
+- ita : Italien
 
----
+## Personnalisation
 
-## API TTS (lecture vocale)
+- Pour ajouter d'autres langues OCR : modifier le Dockerfile et ajouter le paquet tesseract-ocr-XXX correspondant.
+- Pour personnaliser le thème : modifier les couleurs dans `styles.css`.
+- La lecture vocale dépend du navigateur (Web Speech API).
 
-Utilise l’API `SpeechSynthesis` native du navigateur. Fonctionne parfaitement sous :
-- Chrome (Windows/Linux/macOS)
-- Edge
-- Firefox (voix parfois à configurer manuellement)
+## Debug
 
----
-
-## Tests recommandés
-
-- `images/poème.png` : OCR propre en français
-- `images/brouillé.jpg` : vérifie les effets du prétraitement
-- `pdfs/document_scanné.pdf` : génération d’un PDF OCR consultable
-- `caméra` : test webcam directe
-
----
-
-## ❗ Dépendances système incluses (Docker)
-
-```bash
-tesseract-ocr
-tesseract-ocr-fra
-poppler-utils
-libgl1
-libsm6
-libxext6
-libxrender-dev
-libglib2.0-0
-```
----
-
-## Auteurs
-
-Projet développé par
-**Léa Manet**, étudiante M2 NLP.
-**Lidan Zhang**, étudiante M2 NLP.  
-**Keming Yi**, étudiant M2 NLP.
-
+Deux fichiers sont générés automatiquement dans le dossier courant lors de l’OCR :
+- `debug_original.png` : image originale
+- `debug_processed.png` : image après prétraitement OpenCV

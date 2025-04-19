@@ -74,7 +74,6 @@ header h1 {
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
-    margin-bottom: 1rem;
     background-color: rgba(74, 111, 165, 0.05);
     height: 180px;
     display: flex;
@@ -136,6 +135,9 @@ header h1 {
     height: 40px;
     border-radius: 50%;
     margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .options-section {
@@ -225,7 +227,6 @@ header h1 {
     100% { transform: rotate(360deg); }
 }
 
-/* Zone de texte manuelle */
 #manualInput {
     width: 100%;
     margin-top: 1rem;
@@ -246,7 +247,6 @@ header h1 {
     margin-top: 0.8rem;
 }
 
-/* Modal caméra */
 .modal {
     display: none;
     position: fixed;
@@ -314,7 +314,6 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .input-options {
         flex-direction: column;

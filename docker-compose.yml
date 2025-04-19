@@ -9,7 +9,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app  # Permet le rechargement des fichiers sans rebuild
+      - .:/app             # Synchronise tous les fichiers du projet pour développement
+      - /app/__pycache__   # Évite les fichiers temporaires si besoin
     environment:
       - PYTHONUNBUFFERED=1
+      - TZ=Europe/Paris    # (optionnel) définit le fuseau horaire
     restart: unless-stopped
