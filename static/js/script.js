@@ -54,9 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <i class="fas fa-${isDark ? "sun" : "moon"}"></i>
           <span id="themeLabel">${isDark ? "Clair" : "Sombre"}</span>
         `;
-      }
-      
-      
+    }
+
     // Fichier import
     selectFileBtn.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
@@ -99,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
         else return showMessage("Veuillez importer un fichier ou entrer un texte.", "error");
 
         formData.append("lang", lang);
-
         toggleLoading(true);
 
         try {
@@ -133,35 +131,51 @@ document.addEventListener("DOMContentLoaded", () => {
         additionalOutputs.style.display = "none";
     }
 
-    // Lecture vocale intelligente en fonction de la langue détectée
+    // Préchargement des voix dès qu'elles sont disponibles
+    window.speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+    };
+
+    // Lecture vocale intelligente multilingue robuste
     function speakText(text) {
         if (!text.trim()) return;
 
         const detected = detectedLang.textContent || languageSelect.value;
-        const langCode = detected.split("-")[0]; // e.g. "fr" ou "en"
+        const langPrefix = detected.split("-")[0];
+
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = speechSynthesis.getVoices();
 
-        // Recherche d'une voix compatible
-        let chosenVoice = voices.find(v => v.lang.startsWith(langCode));
-        
-        // Si pas de voix trouvée, essaie en forçant la langue détectée
+        const fallbackLangs = {
+            "fr": ["fr-FR"],
+            "en": ["en-US", "en-GB"],
+            "es": ["es-ES", "es-MX"],
+            "de": ["de-DE"],
+            "pt": ["pt-PT", "pt-BR"],
+            "zh": ["zh-CN", "zh-TW"],
+            "it": ["it-IT"],
+            "nl": ["nl-NL"]
+        };
+
+        let chosenVoice = voices.find(v => v.lang.startsWith(langPrefix));
+
+        if (!chosenVoice && fallbackLangs[langPrefix]) {
+            for (const variant of fallbackLangs[langPrefix]) {
+                chosenVoice = voices.find(v => v.lang === variant);
+                if (chosenVoice) break;
+            }
+        }
+
         if (chosenVoice) {
             utterance.voice = chosenVoice;
             utterance.lang = chosenVoice.lang;
         } else {
-            utterance.lang = langCode;
+            utterance.lang = langPrefix;
         }
 
         utterance.rate = 1;
         speechSynthesis.speak(utterance);
     }
-
-    window.speechSynthesis.onvoiceschanged = () => {
-    // Force le chargement des voix (même sans interaction utilisateur)
-    speechSynthesis.getVoices();
-    };
-
 
     readBtn.addEventListener("click", () => speakText(resultContent.innerText));
     manualReadBtn.addEventListener("click", () => speakText(manualInput.value));
