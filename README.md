@@ -16,6 +16,7 @@ Lancez votre Docker, puis:
 ```bash
 sudo docker-compose up --build
 ```
+Accéder ensuite à l'application sur http://localhost:8000
 
 ## Fonctionnalités
 
@@ -35,8 +36,6 @@ sudo docker-compose up --build
 - Frontend : HTML5, CSS3, JavaScript (vanilla), Web Speech API
 - OCR : Tesseract 5 + OpenCV (prétraitement)
 - Déploiement : Docker, Docker Compose
-
-Accéder ensuite à l'application sur http://localhost:8000
 
 ## Arborescence du projet
 
