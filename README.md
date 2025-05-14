@@ -7,7 +7,7 @@ Application web OCR pour extraire du texte depuis des images, de la caméra ou d
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/ton-utilisateur/OCR-images-PDFs.git](https://github.com/Keming956/OCR-images-PDFs
+git clone https://github.com/Keming956/OCR-images-PDFs
 cd OCR-images-PDFs
 ```
 
