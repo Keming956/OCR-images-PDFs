@@ -1,6 +1,21 @@
 ## OCR Vision
 
-Application web OCR (Reconnaissance Optique de Caractères) pour extraire du texte depuis des images ou des PDF, en utilisant FastAPI, Tesseract, OpenCV et Docker.
+Application web OCR pour extraire du texte depuis des images, de la caméra ou des PDF, en utilisant FastAPI, Tesseract, OpenCV et Docker.
+
+## Installation avec Docker
+
+### 1. Cloner le dépôt
+
+```bash
+git clone https://github.com/ton-utilisateur/OCR-images-PDFs.git](https://github.com/Keming956/OCR-images-PDFs
+cd OCR-images-PDFs
+```
+
+### 2. Lancer avec Docker Compose
+Lancez votre Docker, puis:
+```bash
+sudo docker-compose up --build
+```
 
 ## Fonctionnalités
 
@@ -20,21 +35,6 @@ Application web OCR (Reconnaissance Optique de Caractères) pour extraire du tex
 - Frontend : HTML5, CSS3, JavaScript (vanilla), Web Speech API
 - OCR : Tesseract 5 + OpenCV (prétraitement)
 - Déploiement : Docker, Docker Compose
-
-## Installation avec Docker
-
-### 1. Cloner le dépôt
-
-```bash
-git clone https://github.com/ton-utilisateur/ocr-vision.git
-cd ocr-vision
-```
-
-### 2. Lancer avec Docker Compose
-
-```bash
-sudo docker-compose up --build
-```
 
 Accéder ensuite à l'application sur http://localhost:8000
 
@@ -56,8 +56,8 @@ ocr-vision/
 │   │   └── script.js        # Logique front : import, OCR, TTS, caméra, interactions
 │   └── favicon.png          # Icône de l’application
 │
-├── uploaded_files/          # 📂 Auto-créé – Fichiers uploadés (images, PDF) pour analyse
-├── ocr_outputs/             # 📂 Auto-créé – Fichiers résultats : PDF OCR, images annotées
+├── uploaded_files/          # Auto-créé – Fichiers uploadés (images, PDF) pour analyse
+├── ocr_outputs/             # Auto-créé – Fichiers résultats : PDF OCR, images annotées
 │
 ├── requirements.txt         # Liste des dépendances Python (FastAPI, Tesseract, OpenCV, etc.)
 ├── Dockerfile               # Configuration de l’image Docker (OCR en local)
