@@ -133,15 +133,35 @@ document.addEventListener("DOMContentLoaded", () => {
         additionalOutputs.style.display = "none";
     }
 
-    // Lecture vocale intelligente
+    // Lecture vocale intelligente en fonction de la langue détectée
     function speakText(text) {
         if (!text.trim()) return;
-        const lang = detectedLang.textContent || languageSelect.value;
+
+        const detected = detectedLang.textContent || languageSelect.value;
+        const langCode = detected.split("-")[0]; // e.g. "fr" ou "en"
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
+        const voices = speechSynthesis.getVoices();
+
+        // Recherche d'une voix compatible
+        let chosenVoice = voices.find(v => v.lang.startsWith(langCode));
+        
+        // Si pas de voix trouvée, essaie en forçant la langue détectée
+        if (chosenVoice) {
+            utterance.voice = chosenVoice;
+            utterance.lang = chosenVoice.lang;
+        } else {
+            utterance.lang = langCode;
+        }
+
         utterance.rate = 1;
         speechSynthesis.speak(utterance);
     }
+
+    window.speechSynthesis.onvoiceschanged = () => {
+    // Force le chargement des voix (même sans interaction utilisateur)
+    speechSynthesis.getVoices();
+    };
+
 
     readBtn.addEventListener("click", () => speakText(resultContent.innerText));
     manualReadBtn.addEventListener("click", () => speakText(manualInput.value));
